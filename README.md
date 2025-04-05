@@ -1,73 +1,88 @@
-# Welcome to your Lovable project
+# Portfolio WhiteNight
 
-## Project info
+Ce projet est un portfolio personnel développé avec React, Express et TypeScript. Il est conçu pour fonctionner sur plusieurs plateformes, notamment Replit, lovable.dev et bolt.new.
 
-**URL**: https://lovable.dev/projects/8c63fd89-0638-442d-935a-4e099ab75800
+## Prérequis
 
-## How can I edit this code?
+- Node.js (v16 ou supérieur)
+- npm ou yarn
 
-There are several ways of editing your application.
+## Installation
 
-**Use Lovable**
+1. Clonez ce dépôt
+2. Installez les dépendances :
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/8c63fd89-0638-442d-935a-4e099ab75800) and start prompting.
+```bash
+npm install
+# ou
+yarn
+```
 
-Changes made via Lovable will be committed automatically to this repo.
+3. Copiez le fichier `.env.example` vers `.env` et ajustez les variables selon votre environnement.
 
-**Use your preferred IDE**
+## Développement
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Sur Replit
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Le projet est configuré pour fonctionner directement sur Replit sans configuration supplémentaire.
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Sur lovable.dev
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Pour développer sur lovable.dev, utilisez les commandes spécifiques :
 
-**Use GitHub Codespaces**
+```bash
+npm run lovable:dev
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Sur bolt.new
 
-## What technologies are used for this project?
+Pour développer sur bolt.new, utilisez les commandes spécifiques :
 
-This project is built with:
+```bash
+npm run bolt:dev
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Construction et déploiement
 
-## How can I deploy this project?
+### Construction standard
 
-Simply open [Lovable](https://lovable.dev/projects/8c63fd89-0638-442d-935a-4e099ab75800) and click on Share -> Publish.
+```bash
+npm run build
+npm run start
+```
 
-## Can I connect a custom domain to my Lovable project?
+### Pour lovable.dev
 
-Yes it is!
+```bash
+npm run lovable:build
+npm run lovable:start
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Pour bolt.new
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+```bash
+npm run bolt:build
+npm run bolt:start
+```
+
+## Structure du projet
+
+- `client/` : Code source du frontend React
+- `server/` : Code source du backend Express
+- `shared/` : Code partagé entre le frontend et le backend
+- `dist/` : Fichiers générés lors de la construction
+
+## Fonctionnalités
+
+- Interface utilisateur interactive avec animations
+- Curseur personnalisé
+- Grille sociale pour les liens vers les réseaux sociaux
+- Mini-jeu Tic-Tac-Toe intégré
+
+## Licence
+
+MIT
