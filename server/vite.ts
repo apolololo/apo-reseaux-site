@@ -1,3 +1,4 @@
+
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
@@ -37,8 +38,8 @@ export async function setupVite(app: Express, server: Server) {
       clientPort: isLovableDev() ? 443 : 5000,
       protocol: isLovableDev() ? 'wss' : 'ws',
     },
-    // Fix: remplacer le boolean par true spécifiquement
-    allowedHosts: 'all',
+    // Fix: corriger le type de allowedHosts pour qu'il soit compatible
+    allowedHosts: true as true,
   };
 
   const vite = await createViteServer({
