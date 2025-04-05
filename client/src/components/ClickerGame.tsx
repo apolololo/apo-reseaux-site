@@ -828,7 +828,6 @@ const ClickerGame = () => {
                 <Progress
                   className={`h-1 mt-2 ${achievement.achieved ? 'bg-yellow-950' : ''}`}
                   value={getAchievementProgress(achievement)}
-                  indicatorClassName={achievement.achieved ? "bg-yellow-500" : ""}
                 />
               </motion.div>
             ))}
@@ -876,7 +875,6 @@ const ClickerGame = () => {
                 <Progress
                   className={`h-1 mt-2 ${achievement.achieved ? 'bg-green-950' : ''}`}
                   value={getAchievementProgress(achievement)}
-                  indicatorClassName={achievement.achieved ? "bg-green-500" : ""}
                 />
               </motion.div>
             ))}
@@ -924,7 +922,6 @@ const ClickerGame = () => {
                 <Progress
                   className={`h-1 mt-2 ${achievement.achieved ? 'bg-orange-950' : ''}`}
                   value={getAchievementProgress(achievement)}
-                  indicatorClassName={achievement.achieved ? "bg-orange-500" : ""}
                 />
               </motion.div>
             ))}
