@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -43,7 +42,6 @@ interface Achievement {
 }
 
 const ClickerGame = () => {
-  // Game state
   const [isGameActive, setIsGameActive] = useState(false);
   const [clicks, setClicks] = useState(0);
   const [points, setPoints] = useState(0);
@@ -54,9 +52,7 @@ const ClickerGame = () => {
   const [floatingTexts, setFloatingTexts] = useState<Array<{id: number, value: number, x: number, y: number}>>([]);
   const [nextTextId, setNextTextId] = useState(0);
   
-  // List of upgrades
   const [upgrades, setUpgrades] = useState<Upgrade[]>([
-    // Click upgrades - early game
     {
       id: 'click1',
       name: 'Doigts agiles',
@@ -154,7 +150,6 @@ const ClickerGame = () => {
       type: 'click'
     },
     
-    // Passive upgrades - auto clickers
     {
       id: 'passive1',
       name: 'Auto-cliqueur basique',
@@ -253,9 +248,7 @@ const ClickerGame = () => {
     },
   ]);
   
-  // Liste des succès
   const [achievements, setAchievements] = useState<Achievement[]>([
-    // Succès de clics
     {
       id: 'clicks10',
       name: 'Cliqueur débutant',
@@ -311,7 +304,6 @@ const ClickerGame = () => {
       icon: <Star size={18} />
     },
     
-    // Succès de points
     {
       id: 'points100',
       name: 'Collecteur de points',
@@ -358,7 +350,6 @@ const ClickerGame = () => {
       icon: <Trophy size={18} />
     },
     
-    // Succès d'améliorations
     {
       id: 'upgrades3',
       name: 'Amateur d\'améliorations',
@@ -397,7 +388,6 @@ const ClickerGame = () => {
     }
   ]);
   
-  // Passive income
   useEffect(() => {
     if (!isGameActive) return;
     
@@ -410,7 +400,6 @@ const ClickerGame = () => {
     return () => clearInterval(interval);
   }, [isGameActive, pointsPerSecond]);
   
-  // Save game
   useEffect(() => {
     if (!isGameActive) return;
     
@@ -426,7 +415,6 @@ const ClickerGame = () => {
     localStorage.setItem('clickerGameState', JSON.stringify(gameState));
   }, [isGameActive, clicks, points, pointsPerClick, pointsPerSecond, upgrades, achievements]);
   
-  // Load game
   useEffect(() => {
     const savedState = localStorage.getItem('clickerGameState');
     
@@ -447,11 +435,9 @@ const ClickerGame = () => {
     }
   }, []);
   
-  // Toast notification
   const { toast } = useToast();
   const [recentAchievements, setRecentAchievements] = useState<string[]>([]);
   
-  // Check achievements
   useEffect(() => {
     if (!isGameActive) return;
     
@@ -475,7 +461,6 @@ const ClickerGame = () => {
       }
       
       if (achieved) {
-        // This achievement was just unlocked
         newlyAchieved.push(achievement);
       }
       
@@ -488,9 +473,7 @@ const ClickerGame = () => {
     if (JSON.stringify(updatedAchievements) !== JSON.stringify(achievements)) {
       setAchievements(updatedAchievements);
       
-      // Show notifications for new achievements
       newlyAchieved.forEach(achievement => {
-        // Avoid showing duplicate notifications for the same achievement
         if (!recentAchievements.includes(achievement.id)) {
           setRecentAchievements(prev => [...prev, achievement.id]);
           
@@ -508,14 +491,12 @@ const ClickerGame = () => {
             duration: 5000
           });
           
-          // Set active tab to achievements to show the user their new achievement
           setActiveTab('achievements');
         }
       });
     }
   }, [isGameActive, clicks, points, upgrades, achievements, toast, recentAchievements]);
   
-  // Game functions
   const handleMainButtonClick = (e: React.MouseEvent) => {
     if (!isGameActive) {
       setIsGameActive(true);
@@ -526,7 +507,6 @@ const ClickerGame = () => {
     setClicks(prev => prev + 1);
     setPoints(prev => prev + pointsPerClick);
     
-    // Add floating text
     const id = nextTextId;
     setNextTextId(prev => prev + 1);
     
@@ -539,7 +519,6 @@ const ClickerGame = () => {
       { id, value: pointsPerClick, x, y }
     ]);
     
-    // Remove floating text after animation
     setTimeout(() => {
       setFloatingTexts(prev => prev.filter(text => text.id !== id));
     }, 1000);
@@ -552,7 +531,6 @@ const ClickerGame = () => {
     if (upgradeToPurchase.purchases >= upgradeToPurchase.maxPurchases) return;
     if (points < upgradeToPurchase.cost) return;
     
-    // Apply upgrade
     setPoints(prev => prev - upgradeToPurchase.cost);
     
     const updatedUpgrades = upgrades.map(upgrade => {
@@ -572,7 +550,6 @@ const ClickerGame = () => {
     
     setUpgrades(updatedUpgrades);
     
-    // Apply upgrade effects
     if (upgradeToPurchase.type === 'click') {
       setPointsPerClick(prev => prev + upgradeToPurchase.effect);
     } else if (upgradeToPurchase.type === 'passive') {
@@ -580,7 +557,6 @@ const ClickerGame = () => {
     }
   };
   
-  // Calculate progress for achievements
   const getAchievementProgress = (achievement: Achievement) => {
     switch (achievement.type) {
       case 'clicks':
@@ -595,7 +571,6 @@ const ClickerGame = () => {
     }
   };
   
-  // Reset game
   const resetGame = () => {
     if (window.confirm('Êtes-vous sûr de vouloir réinitialiser votre progression ?')) {
       localStorage.removeItem('clickerGameState');
@@ -604,11 +579,9 @@ const ClickerGame = () => {
       setPointsPerClick(1);
       setPointsPerSecond(0);
       
-      // Reset upgrades to their initial costs
       const resetUpgrades = upgrades.map(upgrade => {
-        let initialCost = 15; // default
+        let initialCost = 15;
         
-        // Click upgrades
         if (upgrade.id === 'click1') initialCost = 15;
         else if (upgrade.id === 'click2') initialCost = 50;
         else if (upgrade.id === 'click3') initialCost = 200;
@@ -618,8 +591,7 @@ const ClickerGame = () => {
         else if (upgrade.id === 'click7') initialCost = 25000;
         else if (upgrade.id === 'click8') initialCost = 100000;
         
-        // Passive upgrades
-        else if (upgrade.id === 'passive1') initialCost = 25;
+        if (upgrade.id === 'passive1') initialCost = 25;
         else if (upgrade.id === 'passive2') initialCost = 120;
         else if (upgrade.id === 'passive3') initialCost = 350;
         else if (upgrade.id === 'passive4') initialCost = 1000;
@@ -644,7 +616,6 @@ const ClickerGame = () => {
     }
   };
   
-  // UI elements
   const MainButton = () => (
     <motion.div 
       className="relative flex flex-col items-center mb-4"
@@ -658,7 +629,6 @@ const ClickerGame = () => {
       >
         <span className="text-white text-2xl font-bold">CLIQUEZ</span>
         
-        {/* Floating text elements */}
         {floatingTexts.map(text => (
           <motion.div
             key={text.id}
@@ -675,7 +645,6 @@ const ClickerGame = () => {
     </motion.div>
   );
   
-  // Menu Tabs
   const GameTabs = () => (
     <div className="flex border-b border-white/10 mb-4">
       <button
@@ -693,7 +662,6 @@ const ClickerGame = () => {
     </div>
   );
   
-  // UI for showing upgrades
   const UpgradesUI = () => {
     const clickUpgrades = upgrades.filter(u => u.type === 'click');
     const passiveUpgrades = upgrades.filter(u => u.type === 'passive');
@@ -779,9 +747,7 @@ const ClickerGame = () => {
     );
   };
   
-  // UI for showing achievements
   const AchievementsUI = () => {
-    // Group achievements by type for better organization
     const clickAchievements = achievements.filter(a => a.type === 'clicks');
     const pointsAchievements = achievements.filter(a => a.type === 'points');
     const upgradesAchievements = achievements.filter(a => a.type === 'upgrades');
@@ -935,14 +901,11 @@ const ClickerGame = () => {
     );
   };
   
-  // Main game UI
   return (
     <div className="w-full max-w-sm mx-auto">
       <div className="flex flex-col items-center p-4">
-        {/* Main click button */}
         <MainButton />
         
-        {/* Stats */}
         {isGameActive && (
           <div className="text-center mb-4">
             <div className="flex gap-8 justify-center mb-2">
@@ -968,7 +931,6 @@ const ClickerGame = () => {
           </div>
         )}
         
-        {/* Game UI: Upgrades and Achievements */}
         {isGameActive && showGameUI && (
           <div className="w-full">
             <GameTabs />
