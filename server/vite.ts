@@ -37,7 +37,8 @@ export async function setupVite(app: Express, server: Server) {
       clientPort: isLovableDev() ? 443 : 5000,
       protocol: isLovableDev() ? 'wss' : 'ws',
     },
-    allowedHosts: true,
+    // Fix: remplacer le boolean par true spécifiquement
+    allowedHosts: 'all',
   };
 
   const vite = await createViteServer({
