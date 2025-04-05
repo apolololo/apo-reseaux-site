@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
@@ -41,13 +42,13 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
   },
-  // Configuration spécifique pour lovable.dev et bolt.new
+  // Configuration pour lovable.dev et bolt.new
   server: {
     host: '0.0.0.0',
-    port: 5000,
+    port: 8080,
     strictPort: true,
     hmr: {
-      clientPort: isLovableDev() ? 443 : 5000,
+      clientPort: isLovableDev() ? 443 : 8080,
       protocol: isLovableDev() ? 'wss' : 'ws',
     },
   },
