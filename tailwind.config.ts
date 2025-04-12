@@ -1,6 +1,8 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
+<<<<<<< HEAD
 	darkMode: ["class"],
 	content: [
 		"./pages/**/*.{ts,tsx}",
@@ -93,4 +95,18 @@ export default {
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
+=======
+  darkMode: ["class"],
+  content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        border: "hsl(var(--border))",
+      },
+    },
+  },
+  plugins: [require("tailwindcss-animate")],
+>>>>>>> c265cbdd9c5c3a60cd14f0e50de769dc755042a4
 } satisfies Config;
