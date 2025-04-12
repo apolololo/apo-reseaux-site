@@ -4,7 +4,7 @@ import * as React from "react";
 type ToastActionElement = React.ReactElement;
 
 type ToastProps = {
-  id: string;
+  id?: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
