@@ -19,24 +19,5 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-<<<<<<< HEAD
   base: "/",
 }));
-=======
-  root: path.resolve(import.meta.dirname, "client"),
-  build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
-    emptyOutDir: true,
-  },
-  // Configuration pour lovable.dev et bolt.new
-  server: {
-    host: '0.0.0.0',
-    port: 8080,
-    strictPort: true,
-    hmr: {
-      clientPort: isLovableDev() ? 443 : 8080,
-      protocol: isLovableDev() ? 'wss' : 'ws',
-    },
-  },
-});
->>>>>>> c265cbdd9c5c3a60cd14f0e50de769dc755042a4
