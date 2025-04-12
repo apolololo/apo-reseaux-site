@@ -9,14 +9,14 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Servir les fichiers statiques depuis le dossier dist
+// Serve static files from the dist directory
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// Pour toutes les autres requêtes, renvoyer index.html
+// For all other requests, send index.html
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 app.listen(PORT, () => {
-  console.log(`Serveur démarré sur le port ${PORT}`);
+  console.log(`Server started on port ${PORT}`);
 });
