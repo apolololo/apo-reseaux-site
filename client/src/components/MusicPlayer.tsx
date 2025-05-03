@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Volume2, VolumeX, SkipForward } from 'lucide-react';
+import { Volume2, VolumeX, SkipForward, Play, Pause } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 
@@ -52,8 +52,25 @@ export default function MusicPlayer() {
     };
     
     if (tracks.length > 0 && audioRef.current) {
-      audioRef.current.play().catch(console.error);
-      startVolumeFade();
+      // Tentative de lecture automatique avec gestion des erreurs
+      const playPromise = audioRef.current.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            // La lecture a démarré avec succès
+            setIsPlaying(true);
+            startVolumeFade();
+          })
+          .catch(error => {
+            console.warn("Autoplay prevented by browser:", error);
+            // Réinitialiser l'état de lecture
+            setIsPlaying(false);
+            // Nous gardons le fade-in du volume pour qu'il soit prêt quand l'utilisateur
+            // décidera de lancer la lecture manuellement
+            startVolumeFade();
+          });
+      }
     }
     
     return () => {
@@ -67,6 +84,33 @@ export default function MusicPlayer() {
     }
   }, [volume, isMuted]);
   
+  // Effet pour démarrer la lecture après une interaction utilisateur
+  useEffect(() => {
+    const attemptPlayOnUserInteraction = () => {
+      if (audioRef.current && !isPlaying) {
+        audioRef.current.play()
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch(error => {
+            console.warn("Playback failed:", error);
+          });
+      }
+    };
+    
+    // Ajouter des écouteurs d'événements pour les interactions utilisateur
+    const interactionEvents = ['click', 'touchstart', 'keydown', 'scroll'];
+    interactionEvents.forEach(event => {
+      document.addEventListener(event, attemptPlayOnUserInteraction, { once: true });
+    });
+    
+    return () => {
+      interactionEvents.forEach(event => {
+        document.removeEventListener(event, attemptPlayOnUserInteraction);
+      });
+    };
+  }, [isPlaying]);
+  
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
@@ -77,6 +121,19 @@ export default function MusicPlayer() {
   
   const toggleMute = () => {
     setIsMuted(!isMuted);
+  };
+  
+  const togglePlayPause = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current.play()
+          .then(() => setIsPlaying(true))
+          .catch(error => console.warn("Play failed:", error));
+      }
+    }
   };
   
   const skipTrack = () => {
@@ -101,8 +158,30 @@ export default function MusicPlayer() {
           ref={audioRef}
           src={tracks[currentTrack]}
           autoPlay={true}
+          muted={false} // Initialement non muet pour permettre la lecture avec son
           onEnded={handleTrackEnd}
+          onCanPlay={() => {
+            // Essayer de démarrer la lecture dès que possible
+            if (audioRef.current && !isPlaying) {
+              audioRef.current.play()
+                .then(() => setIsPlaying(true))
+                .catch(err => console.warn("Autoplay prevented:", err));
+            }
+          }}
         />
+        
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white hover:text-white/80"
+          onClick={togglePlayPause}
+        >
+          {isPlaying ? (
+            <Pause className="h-5 w-5" />
+          ) : (
+            <Play className="h-5 w-5" />
+          )}
+        </Button>
         
         <Button
           variant="ghost"
