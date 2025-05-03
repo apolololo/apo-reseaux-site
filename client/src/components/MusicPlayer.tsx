@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Volume2, VolumeX, SkipForward, Play, Pause } from 'lucide-react';
+import { Volume2, VolumeX, SkipForward, Music } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 
@@ -104,6 +104,33 @@ export default function MusicPlayer() {
     };
   }, [isPlaying]);
   
+  // Effet pour s'assurer que la musique continue de jouer
+  useEffect(() => {
+    if (isPlaying && audioRef.current) {
+      // S'assurer que la musique ne peut pas être mise en pause
+      const ensurePlaying = () => {
+        if (audioRef.current && audioRef.current.paused) {
+          audioRef.current.play().catch(console.error);
+        }
+      };
+      
+      // Vérifier périodiquement que la musique joue toujours
+      const checkInterval = setInterval(ensurePlaying, 1000);
+      
+      // Ajouter un écouteur pour redémarrer la lecture si elle est mise en pause
+      audioRef.current.addEventListener('pause', () => {
+        // Ne pas redémarrer si la pause est due à la fin de la piste
+        if (!audioRef.current?.ended) {
+          audioRef.current?.play().catch(console.error);
+        }
+      });
+      
+      return () => {
+        clearInterval(checkInterval);
+      };
+    }
+  }, [isPlaying]);
+  
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
@@ -116,16 +143,12 @@ export default function MusicPlayer() {
     setIsMuted(!isMuted);
   };
   
-  const togglePlayPause = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        audioRef.current.play()
-          .then(() => setIsPlaying(true))
-          .catch(error => console.warn("Play failed:", error));
-      }
+  // Fonction pour démarrer la lecture (sans possibilité de pause)
+  const startPlayback = () => {
+    if (audioRef.current && !isPlaying) {
+      audioRef.current.play()
+        .then(() => setIsPlaying(true))
+        .catch(error => console.warn("Play failed:", error));
     }
   };
   
@@ -160,18 +183,9 @@ export default function MusicPlayer() {
           onEnded={handleTrackEnd}
         />
         
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-white hover:text-white/80 h-8 w-8"
-          onClick={togglePlayPause}
-        >
-          {isPlaying ? (
-            <Pause className="h-4 w-4" />
-          ) : (
-            <Play className="h-4 w-4" />
-          )}
-        </Button>
+        <div className="flex items-center justify-center w-8 h-8">
+          <Music className="h-4 w-4 text-white/80" />
+        </div>
         
         <Button
           variant="ghost"
