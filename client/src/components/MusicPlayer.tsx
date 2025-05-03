@@ -1,19 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import { Volume2, VolumeX, SkipForward, Music } from 'lucide-react';
+import { Volume2, VolumeX, SkipForward, Play, Pause } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 
 const GITHUB_MUSIC_URL = 'https://raw.githubusercontent.com/apolololo/apolinks_music/main/music';
 
 export default function MusicPlayer() {
-  // Initialiser le volume à 0.5 (50%) directement
-  const [volume, setVolume] = useState(0.5);
+  const [volume, setVolume] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [tracks, setTracks] = useState<string[]>([]);
-  const [hasInteracted, setHasInteracted] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const hasStartedRef = useRef(false);
+  const fadeIntervalRef = useRef<number>();
   
   // Fetch music files from GitHub
   useEffect(() => {
@@ -36,62 +35,39 @@ export default function MusicPlayer() {
       .catch(error => console.error('Error fetching music files:', error));
   }, []);
   
-  // Démarrage automatique de la musique quand les pistes sont chargées
+  // Smooth volume fade-in effect
   useEffect(() => {
-    if (tracks.length > 0 && audioRef.current && !hasStartedRef.current) {
-      // Définir le volume initial à 50%
-      if (audioRef.current) {
-        audioRef.current.volume = 0.5;
-      }
+    const startVolumeFade = () => {
+      let currentVolume = 0;
+      clearInterval(fadeIntervalRef.current);
       
-      // Technique spéciale pour contourner les restrictions de lecture automatique
-      // En créant un contexte audio et en le connectant à l'élément audio
-      try {
-        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-        if (AudioContext) {
-          // Créer un contexte audio qui peut aider à débloquer la lecture automatique
-          const audioContext = new AudioContext();
-          
-          // Créer un nœud source à partir de l'élément audio
-          if (audioRef.current) {
-            const source = audioContext.createMediaElementSource(audioRef.current);
-            // Connecter la source à la destination (haut-parleurs)
-            source.connect(audioContext.destination);
-            
-            // Reprendre le contexte audio (nécessaire pour certains navigateurs)
-            if (audioContext.state === 'suspended') {
-              audioContext.resume();
-            }
-          }
+      fadeIntervalRef.current = window.setInterval(() => {
+        currentVolume += 0.01;
+        if (currentVolume >= 0.5) {
+          currentVolume = 0.5;
+          clearInterval(fadeIntervalRef.current);
         }
-      } catch (e) {
-        console.warn("AudioContext not supported:", e);
-      }
-      
-      // Fonction pour tenter de démarrer la lecture
-      const attemptAutoplay = () => {
-        if (audioRef.current) {
-          // Essayer de démarrer la lecture avec différentes méthodes
-          const playPromise = audioRef.current.play();
-          
-          if (playPromise !== undefined) {
-            playPromise
-              .then(() => {
-                console.log("Autoplay successful");
-                hasStartedRef.current = true;
-              })
-              .catch(error => {
-                console.warn("Autoplay attempt failed:", error);
-                // Réessayer après un court délai
-                setTimeout(attemptAutoplay, 500);
-              });
-          }
-        }
-      };
-      
-      // Essayer de démarrer la lecture immédiatement
-      attemptAutoplay();
+        setVolume(currentVolume);
+      }, 50); // Update every 50ms for smooth transition
+    };
+    
+    if (tracks.length > 0 && audioRef.current) {
+      // Tenter de démarrer la lecture automatique
+      audioRef.current.play()
+        .then(() => {
+          setIsPlaying(true);
+          startVolumeFade();
+        })
+        .catch(error => {
+          console.warn("Autoplay prevented by browser:", error);
+          // Si la lecture automatique échoue, on prépare quand même le volume
+          startVolumeFade();
+        });
     }
+    
+    return () => {
+      clearInterval(fadeIntervalRef.current);
+    };
   }, [tracks]);
   
   // Mise à jour du volume
@@ -102,14 +78,12 @@ export default function MusicPlayer() {
   }, [volume, isMuted]);
   
   // Effet pour démarrer la lecture après une interaction utilisateur
-  // Mais seulement si la lecture n'a pas encore démarré
   useEffect(() => {
     const attemptPlayOnUserInteraction = () => {
-      if (audioRef.current && !hasStartedRef.current) {
+      if (audioRef.current && !isPlaying) {
         audioRef.current.play()
           .then(() => {
-            hasStartedRef.current = true;
-            setHasInteracted(true);
+            setIsPlaying(true);
           })
           .catch(error => {
             console.warn("Playback failed after interaction:", error);
@@ -128,7 +102,7 @@ export default function MusicPlayer() {
         document.removeEventListener(event, attemptPlayOnUserInteraction);
       });
     };
-  }, []);
+  }, [isPlaying]);
   
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
@@ -142,11 +116,26 @@ export default function MusicPlayer() {
     setIsMuted(!isMuted);
   };
   
+  const togglePlayPause = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current.play()
+          .then(() => setIsPlaying(true))
+          .catch(error => console.warn("Play failed:", error));
+      }
+    }
+  };
+  
   const skipTrack = () => {
     setCurrentTrack((prev) => (prev + 1) % tracks.length);
     // Forcer la lecture lors du changement de piste
     if (audioRef.current) {
-      audioRef.current.play().catch(console.error);
+      audioRef.current.play()
+        .then(() => setIsPlaying(true))
+        .catch(console.error);
     }
   };
   
@@ -168,32 +157,21 @@ export default function MusicPlayer() {
           ref={audioRef}
           src={tracks[currentTrack]}
           autoPlay={true}
-          preload="auto"
-          loop={false}
-          muted={false}
-          onLoadedMetadata={() => {
-            // Définir le volume à 50% dès que les métadonnées sont chargées
-            if (audioRef.current) {
-              audioRef.current.volume = 0.5;
-            }
-          }}
           onEnded={handleTrackEnd}
-          onCanPlay={() => {
-            // Essayer de démarrer la lecture dès que possible
-            if (audioRef.current && !hasStartedRef.current) {
-              audioRef.current.volume = 0.5; // Définir le volume à 50% immédiatement
-              audioRef.current.play()
-                .then(() => {
-                  hasStartedRef.current = true;
-                })
-                .catch(err => console.warn("Autoplay prevented:", err));
-            }
-          }}
         />
         
-        <div className="flex items-center justify-center w-8 h-8">
-          <Music className="h-4 w-4 text-white/90" />
-        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white hover:text-white/80 h-8 w-8"
+          onClick={togglePlayPause}
+        >
+          {isPlaying ? (
+            <Pause className="h-4 w-4" />
+          ) : (
+            <Play className="h-4 w-4" />
+          )}
+        </Button>
         
         <Button
           variant="ghost"
