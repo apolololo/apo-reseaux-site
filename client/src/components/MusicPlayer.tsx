@@ -143,50 +143,56 @@ export default function MusicPlayer() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex items-center gap-3 bg-black/50 backdrop-blur-lg rounded-full px-4 py-2 border border-white/10"
+        className="group relative flex items-center"
       >
-        <audio
-          ref={audioRef}
-          src={tracks[currentTrack]}
-          autoPlay={true}
-          onEnded={handleTrackEnd}
-        />
-
-        <div className="flex items-center justify-center w-8 h-8">
+        <div className="flex items-center justify-center w-8 h-8 bg-black/50 backdrop-blur-lg rounded-full cursor-pointer border border-white/10">
           <Music className="h-4 w-4 text-white/80" />
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-white hover:text-white/80 h-8 w-8"
-          onClick={toggleMute}
+        <motion.div
+          initial={{ width: 0, opacity: 0 }}
+          whileHover={{ width: "auto", opacity: 1 }}
+          className="absolute left-6 overflow-hidden flex items-center gap-3 bg-black/50 backdrop-blur-lg rounded-full px-4 py-2 border border-white/10 group-hover:flex"
         >
-          {isMuted || volume === 0 ? (
-            <VolumeX className="h-4 w-4" />
-          ) : (
-            <Volume2 className="h-4 w-4" />
-          )}
-        </Button>
+          <audio
+            ref={audioRef}
+            src={tracks[currentTrack]}
+            autoPlay={true}
+            onEnded={handleTrackEnd}
+          />
 
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value={volume}
-          onChange={handleVolumeChange}
-          className="w-24 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
-        />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white hover:text-white/80 h-8 w-8"
+            onClick={toggleMute}
+          >
+            {isMuted || volume === 0 ? (
+              <VolumeX className="h-4 w-4" />
+            ) : (
+              <Volume2 className="h-4 w-4" />
+            )}
+          </Button>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-white hover:text-white/80 h-8 w-8"
-          onClick={skipTrack}
-        >
-          <SkipForward className="h-4 w-4" />
-        </Button>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={volume}
+            onChange={handleVolumeChange}
+            className="w-24 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+          />
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white hover:text-white/80 h-8 w-8"
+            onClick={skipTrack}
+          >
+            <SkipForward className="h-4 w-4" />
+          </Button>
+        </motion.div>
       </motion.div>
     </div>
   );
