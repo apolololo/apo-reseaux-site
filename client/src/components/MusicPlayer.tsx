@@ -11,8 +11,10 @@ export default function MusicPlayer() {
   const [currentTrack, setCurrentTrack] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [tracks, setTracks] = useState<string[]>([]);
+  const [isExpanded, setIsExpanded] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const fadeIntervalRef = useRef<number>();
+  const playerRef = useRef<HTMLDivElement>(null);
 
   // Fetch music files from GitHub
   useEffect(() => {
@@ -100,6 +102,20 @@ export default function MusicPlayer() {
     }
   }, [isPlaying]);
 
+  // Handle mouse enter/leave for the player
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (playerRef.current && !playerRef.current.contains(event.target as Node)) {
+        setIsExpanded(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
@@ -138,21 +154,37 @@ export default function MusicPlayer() {
   if (tracks.length === 0) return null;
 
   return (
-    <div className="fixed bottom-8 left-8 z-50">
+    <div 
+      className="fixed bottom-8 left-8 z-50" 
+      ref={playerRef}
+      onMouseEnter={() => setIsExpanded(true)}
+      onMouseLeave={() => setIsExpanded(false)}
+    >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="group relative flex items-center"
+        className="relative flex items-center"
       >
-        <div className="flex items-center justify-center w-8 h-8 bg-black/50 backdrop-blur-lg rounded-full cursor-pointer border border-white/10">
-          <Music className="h-4 w-4 text-white/80" />
+        <div 
+          className="flex items-center justify-center w-10 h-10 bg-black/50 backdrop-blur-lg rounded-full cursor-pointer border border-white/10 z-10"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <Music className="h-5 w-5 text-white/80" />
         </div>
 
         <motion.div
           initial={{ width: 0, opacity: 0 }}
-          whileHover={{ width: "auto", opacity: 1 }}
-          className="absolute left-6 overflow-hidden flex items-center gap-3 bg-black/50 backdrop-blur-lg rounded-full px-4 py-2 border border-white/10 group-hover:flex"
+          animate={{ 
+            width: isExpanded ? "auto" : 0, 
+            opacity: isExpanded ? 1 : 0,
+            x: isExpanded ? 0 : -10
+          }}
+          transition={{ 
+            duration: 0.3, 
+            ease: "easeInOut" 
+          }}
+          className="absolute left-8 overflow-hidden flex items-center gap-3 bg-black/50 backdrop-blur-lg rounded-full px-4 py-2 border border-white/10"
         >
           <audio
             ref={audioRef}
@@ -164,7 +196,7 @@ export default function MusicPlayer() {
           <Button
             variant="ghost"
             size="icon"
-            className="text-white hover:text-white/80 h-8 w-8"
+            className="text-white hover:text-white/80 h-8 w-8 ml-2"
             onClick={toggleMute}
           >
             {isMuted || volume === 0 ? (
