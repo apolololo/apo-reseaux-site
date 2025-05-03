@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 const GITHUB_MUSIC_URL = 'https://raw.githubusercontent.com/apolololo/apolinks_music/main/music';
 
 export default function MusicPlayer() {
-  const [volume, setVolume] = useState(0.5);
+  const [volume, setVolume] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [tracks, setTracks] = useState<string[]>([]);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const fadeIntervalRef = useRef<number>();
   
   // Fetch music files from GitHub
   useEffect(() => {
@@ -32,6 +33,29 @@ export default function MusicPlayer() {
         setTracks(shuffledTracks);
       })
       .catch(error => console.error('Error fetching music files:', error));
+  }, []);
+  
+  // Smooth volume fade-in effect
+  useEffect(() => {
+    const startVolumeFade = () => {
+      let currentVolume = 0;
+      clearInterval(fadeIntervalRef.current);
+      
+      fadeIntervalRef.current = window.setInterval(() => {
+        currentVolume += 0.01;
+        if (currentVolume >= 0.5) {
+          currentVolume = 0.5;
+          clearInterval(fadeIntervalRef.current);
+        }
+        setVolume(currentVolume);
+      }, 50); // Update every 50ms for smooth transition
+    };
+    
+    startVolumeFade();
+    
+    return () => {
+      clearInterval(fadeIntervalRef.current);
+    };
   }, []);
   
   useEffect(() => {
