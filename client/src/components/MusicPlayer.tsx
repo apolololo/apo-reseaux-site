@@ -51,12 +51,15 @@ export default function MusicPlayer() {
       }, 50); // Update every 50ms for smooth transition
     };
     
-    startVolumeFade();
+    if (tracks.length > 0 && audioRef.current) {
+      audioRef.current.play().catch(console.error);
+      startVolumeFade();
+    }
     
     return () => {
       clearInterval(fadeIntervalRef.current);
     };
-  }, []);
+  }, [tracks]);
   
   useEffect(() => {
     if (audioRef.current) {
@@ -97,7 +100,7 @@ export default function MusicPlayer() {
         <audio
           ref={audioRef}
           src={tracks[currentTrack]}
-          autoPlay={isPlaying}
+          autoPlay={true}
           onEnded={handleTrackEnd}
         />
         
