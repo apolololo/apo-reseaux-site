@@ -1,17 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
-import { Volume2, VolumeX, SkipForward } from 'lucide-react';
+import { Volume2, VolumeX, SkipForward, Music } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 
 const GITHUB_MUSIC_URL = 'https://raw.githubusercontent.com/apolololo/apolinks_music/main/music';
 
 export default function MusicPlayer() {
-  const [volume, setVolume] = useState(0);
+  // Initialiser le volume à 0.5 (50%) directement
+  const [volume, setVolume] = useState(0.5);
   const [isMuted, setIsMuted] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(0);
   const [tracks, setTracks] = useState<string[]>([]);
+  const [hasInteracted, setHasInteracted] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const fadeIntervalRef = useRef<number>();
+  const hasStartedRef = useRef(false);
   
   // Fetch music files from GitHub
   useEffect(() => {
@@ -34,46 +36,62 @@ export default function MusicPlayer() {
       .catch(error => console.error('Error fetching music files:', error));
   }, []);
   
-  // Smooth volume fade-in effect et démarrage automatique de la musique
+  // Démarrage automatique de la musique quand les pistes sont chargées
   useEffect(() => {
-    const startVolumeFade = () => {
-      let currentVolume = 0;
-      clearInterval(fadeIntervalRef.current);
+    if (tracks.length > 0 && audioRef.current && !hasStartedRef.current) {
+      // Définir le volume initial à 50%
+      if (audioRef.current) {
+        audioRef.current.volume = 0.5;
+      }
       
-      fadeIntervalRef.current = window.setInterval(() => {
-        currentVolume += 0.01;
-        if (currentVolume >= 0.5) {
-          currentVolume = 0.5;
-          clearInterval(fadeIntervalRef.current);
+      // Technique spéciale pour contourner les restrictions de lecture automatique
+      // En créant un contexte audio et en le connectant à l'élément audio
+      try {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioContext) {
+          // Créer un contexte audio qui peut aider à débloquer la lecture automatique
+          const audioContext = new AudioContext();
+          
+          // Créer un nœud source à partir de l'élément audio
+          if (audioRef.current) {
+            const source = audioContext.createMediaElementSource(audioRef.current);
+            // Connecter la source à la destination (haut-parleurs)
+            source.connect(audioContext.destination);
+            
+            // Reprendre le contexte audio (nécessaire pour certains navigateurs)
+            if (audioContext.state === 'suspended') {
+              audioContext.resume();
+            }
+          }
         }
-        setVolume(currentVolume);
-      }, 50); // Update every 50ms for smooth transition
-    };
-    
-    if (tracks.length > 0 && audioRef.current) {
-      // Forcer la lecture automatique avec plusieurs tentatives
+      } catch (e) {
+        console.warn("AudioContext not supported:", e);
+      }
+      
+      // Fonction pour tenter de démarrer la lecture
       const attemptAutoplay = () => {
         if (audioRef.current) {
-          audioRef.current.play()
-            .then(() => {
-              console.log("Autoplay successful");
-              startVolumeFade();
-            })
-            .catch(error => {
-              console.warn("Autoplay attempt failed:", error);
-              // Réessayer après un court délai
-              setTimeout(attemptAutoplay, 1000);
-            });
+          // Essayer de démarrer la lecture avec différentes méthodes
+          const playPromise = audioRef.current.play();
+          
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => {
+                console.log("Autoplay successful");
+                hasStartedRef.current = true;
+              })
+              .catch(error => {
+                console.warn("Autoplay attempt failed:", error);
+                // Réessayer après un court délai
+                setTimeout(attemptAutoplay, 500);
+              });
+          }
         }
       };
       
+      // Essayer de démarrer la lecture immédiatement
       attemptAutoplay();
-      startVolumeFade(); // Démarrer le fade-in du volume de toute façon
     }
-    
-    return () => {
-      clearInterval(fadeIntervalRef.current);
-    };
   }, [tracks]);
   
   // Mise à jour du volume
@@ -84,12 +102,18 @@ export default function MusicPlayer() {
   }, [volume, isMuted]);
   
   // Effet pour démarrer la lecture après une interaction utilisateur
+  // Mais seulement si la lecture n'a pas encore démarré
   useEffect(() => {
     const attemptPlayOnUserInteraction = () => {
-      if (audioRef.current) {
-        audioRef.current.play().catch(error => {
-          console.warn("Playback failed after interaction:", error);
-        });
+      if (audioRef.current && !hasStartedRef.current) {
+        audioRef.current.play()
+          .then(() => {
+            hasStartedRef.current = true;
+            setHasInteracted(true);
+          })
+          .catch(error => {
+            console.warn("Playback failed after interaction:", error);
+          });
       }
     };
     
@@ -133,26 +157,43 @@ export default function MusicPlayer() {
   if (tracks.length === 0) return null;
   
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-8 left-8 z-50">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex items-center gap-3 bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5"
+        className="flex items-center gap-3 bg-black/50 backdrop-blur-lg rounded-full px-4 py-2 border border-white/10"
       >
         <audio
           ref={audioRef}
           src={tracks[currentTrack]}
           autoPlay={true}
+          preload="auto"
           loop={false}
+          muted={false}
+          onLoadedMetadata={() => {
+            // Définir le volume à 50% dès que les métadonnées sont chargées
+            if (audioRef.current) {
+              audioRef.current.volume = 0.5;
+            }
+          }}
           onEnded={handleTrackEnd}
           onCanPlay={() => {
             // Essayer de démarrer la lecture dès que possible
-            if (audioRef.current) {
-              audioRef.current.play().catch(err => console.warn("Autoplay prevented:", err));
+            if (audioRef.current && !hasStartedRef.current) {
+              audioRef.current.volume = 0.5; // Définir le volume à 50% immédiatement
+              audioRef.current.play()
+                .then(() => {
+                  hasStartedRef.current = true;
+                })
+                .catch(err => console.warn("Autoplay prevented:", err));
             }
           }}
         />
+        
+        <div className="flex items-center justify-center w-8 h-8">
+          <Music className="h-4 w-4 text-white/90" />
+        </div>
         
         <Button
           variant="ghost"
@@ -174,7 +215,7 @@ export default function MusicPlayer() {
           step="0.01"
           value={volume}
           onChange={handleVolumeChange}
-          className="w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+          className="w-24 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
         />
         
         <Button
