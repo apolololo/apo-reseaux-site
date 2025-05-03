@@ -13,7 +13,7 @@ export default function MusicPlayer() {
   const [tracks, setTracks] = useState<string[]>([]);
   const audioRef = useRef<HTMLAudioElement>(null);
   const fadeIntervalRef = useRef<number>();
-  
+
   // Fetch music files from GitHub
   useEffect(() => {
     fetch('https://api.github.com/repos/apolololo/apolinks_music/contents/music')
@@ -23,24 +23,24 @@ export default function MusicPlayer() {
           console.error('Unexpected data format:', data);
           return;
         }
-        
+
         const musicFiles = data
           .filter((file) => file && typeof file === 'object' && file.type === 'file')
           .map((file) => `${GITHUB_MUSIC_URL}/${file.name}`);
-        
+
         // Shuffle the tracks
         const shuffledTracks = [...musicFiles].sort(() => Math.random() - 0.5);
         setTracks(shuffledTracks);
       })
       .catch(error => console.error('Error fetching music files:', error));
   }, []);
-  
+
   // Smooth volume fade-in effect
   useEffect(() => {
     const startVolumeFade = () => {
       let currentVolume = 0;
       clearInterval(fadeIntervalRef.current);
-      
+
       fadeIntervalRef.current = window.setInterval(() => {
         currentVolume += 0.01;
         if (currentVolume >= 0.5) {
@@ -50,9 +50,8 @@ export default function MusicPlayer() {
         setVolume(currentVolume);
       }, 50); // Update every 50ms for smooth transition
     };
-    
+
     if (tracks.length > 0 && audioRef.current) {
-      // Tenter de démarrer la lecture automatique
       audioRef.current.play()
         .then(() => {
           setIsPlaying(true);
@@ -60,50 +59,22 @@ export default function MusicPlayer() {
         })
         .catch(error => {
           console.warn("Autoplay prevented by browser:", error);
-          // Si la lecture automatique échoue, on prépare quand même le volume
           startVolumeFade();
         });
     }
-    
+
     return () => {
       clearInterval(fadeIntervalRef.current);
     };
   }, [tracks]);
-  
+
   // Mise à jour du volume
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = isMuted ? 0 : volume;
     }
   }, [volume, isMuted]);
-  
-  // Effet pour démarrer la lecture après une interaction utilisateur
-  useEffect(() => {
-    const attemptPlayOnUserInteraction = () => {
-      if (audioRef.current && !isPlaying) {
-        audioRef.current.play()
-          .then(() => {
-            setIsPlaying(true);
-          })
-          .catch(error => {
-            console.warn("Playback failed after interaction:", error);
-          });
-      }
-    };
-    
-    // Ajouter des écouteurs d'événements pour les interactions utilisateur
-    const interactionEvents = ['click', 'touchstart', 'keydown', 'scroll'];
-    interactionEvents.forEach(event => {
-      document.addEventListener(event, attemptPlayOnUserInteraction, { once: true });
-    });
-    
-    return () => {
-      interactionEvents.forEach(event => {
-        document.removeEventListener(event, attemptPlayOnUserInteraction);
-      });
-    };
-  }, [isPlaying]);
-  
+
   // Effet pour s'assurer que la musique continue de jouer
   useEffect(() => {
     if (isPlaying && audioRef.current) {
@@ -113,24 +84,22 @@ export default function MusicPlayer() {
           audioRef.current.play().catch(console.error);
         }
       };
-      
+
       // Vérifier périodiquement que la musique joue toujours
       const checkInterval = setInterval(ensurePlaying, 1000);
-      
       // Ajouter un écouteur pour redémarrer la lecture si elle est mise en pause
       audioRef.current.addEventListener('pause', () => {
-        // Ne pas redémarrer si la pause est due à la fin de la piste
         if (!audioRef.current?.ended) {
           audioRef.current?.play().catch(console.error);
         }
       });
-      
+
       return () => {
         clearInterval(checkInterval);
       };
     }
   }, [isPlaying]);
-  
+
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
@@ -138,11 +107,11 @@ export default function MusicPlayer() {
       setIsMuted(false);
     }
   };
-  
+
   const toggleMute = () => {
     setIsMuted(!isMuted);
   };
-  
+
   // Fonction pour démarrer la lecture (sans possibilité de pause)
   const startPlayback = () => {
     if (audioRef.current && !isPlaying) {
@@ -151,7 +120,7 @@ export default function MusicPlayer() {
         .catch(error => console.warn("Play failed:", error));
     }
   };
-  
+
   const skipTrack = () => {
     setCurrentTrack((prev) => (prev + 1) % tracks.length);
     // Forcer la lecture lors du changement de piste
@@ -161,13 +130,13 @@ export default function MusicPlayer() {
         .catch(console.error);
     }
   };
-  
+
   const handleTrackEnd = () => {
     skipTrack();
   };
-  
+
   if (tracks.length === 0) return null;
-  
+
   return (
     <div className="fixed bottom-8 left-8 z-50">
       <motion.div
@@ -182,11 +151,11 @@ export default function MusicPlayer() {
           autoPlay={true}
           onEnded={handleTrackEnd}
         />
-        
+
         <div className="flex items-center justify-center w-8 h-8">
           <Music className="h-4 w-4 text-white/80" />
         </div>
-        
+
         <Button
           variant="ghost"
           size="icon"
@@ -199,7 +168,7 @@ export default function MusicPlayer() {
             <Volume2 className="h-4 w-4" />
           )}
         </Button>
-        
+
         <input
           type="range"
           min="0"
@@ -209,7 +178,7 @@ export default function MusicPlayer() {
           onChange={handleVolumeChange}
           className="w-24 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
         />
-        
+
         <Button
           variant="ghost"
           size="icon"
