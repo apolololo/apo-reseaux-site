@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Volume2, VolumeX, SkipForward, Music } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 
 const GITHUB_MUSIC_URL = 'https://raw.githubusercontent.com/apolololo/apolinks_music/main/music';
@@ -11,9 +11,9 @@ export default function MusicPlayer() {
   const [currentTrack, setCurrentTrack] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [tracks, setTracks] = useState<string[]>([]);
-  const [controlsVisible, setControlsVisible] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
   const fadeIntervalRef = useRef<number>();
+
   // Fetch music files from GitHub
   useEffect(() => {
     fetch('https://api.github.com/repos/apolololo/apolinks_music/contents/music')
@@ -156,47 +156,37 @@ export default function MusicPlayer() {
           <Music className="h-4 w-4 text-white/80" />
         </div>
 
-        <AnimatePresence>
-          {controlsVisible && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-white hover:text-white/80 h-8 w-8"
-                onClick={toggleMute}
-              >
-                {isMuted || volume === 0 ? (
-                  <VolumeX className="h-4 w-4" />
-                ) : (
-                  <Volume2 className="h-4 w-4" />
-                )}
-              </Button>
-
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={volume}
-                onChange={handleVolumeChange}
-                className="w-24 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
-              />
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-white hover:text-white/80 h-8 w-8"
-                onClick={skipTrack}
-              >
-                <SkipForward className="h-4 w-4" />
-              </Button>
-            </motion.div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white hover:text-white/80 h-8 w-8"
+          onClick={toggleMute}
+        >
+          {isMuted || volume === 0 ? (
+            <VolumeX className="h-4 w-4" />
+          ) : (
+            <Volume2 className="h-4 w-4" />
           )}
-        </AnimatePresence>
+        </Button>
+
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value={volume}
+          onChange={handleVolumeChange}
+          className="w-24 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+        />
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white hover:text-white/80 h-8 w-8"
+          onClick={skipTrack}
+        >
+          <SkipForward className="h-4 w-4" />
+        </Button>
       </motion.div>
     </div>
   );
