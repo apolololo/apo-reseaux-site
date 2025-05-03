@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Volume2, VolumeX, SkipForward, Play, Pause } from 'lucide-react';
+import { Volume2, VolumeX, SkipForward } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 
@@ -9,7 +9,6 @@ export default function MusicPlayer() {
   const [volume, setVolume] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
   const [tracks, setTracks] = useState<string[]>([]);
   const audioRef = useRef<HTMLAudioElement>(null);
   const fadeIntervalRef = useRef<number>();
@@ -35,7 +34,7 @@ export default function MusicPlayer() {
       .catch(error => console.error('Error fetching music files:', error));
   }, []);
   
-  // Smooth volume fade-in effect
+  // Smooth volume fade-in effect et démarrage automatique de la musique
   useEffect(() => {
     const startVolumeFade = () => {
       let currentVolume = 0;
@@ -52,25 +51,24 @@ export default function MusicPlayer() {
     };
     
     if (tracks.length > 0 && audioRef.current) {
-      // Tentative de lecture automatique avec gestion des erreurs
-      const playPromise = audioRef.current.play();
+      // Forcer la lecture automatique avec plusieurs tentatives
+      const attemptAutoplay = () => {
+        if (audioRef.current) {
+          audioRef.current.play()
+            .then(() => {
+              console.log("Autoplay successful");
+              startVolumeFade();
+            })
+            .catch(error => {
+              console.warn("Autoplay attempt failed:", error);
+              // Réessayer après un court délai
+              setTimeout(attemptAutoplay, 1000);
+            });
+        }
+      };
       
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            // La lecture a démarré avec succès
-            setIsPlaying(true);
-            startVolumeFade();
-          })
-          .catch(error => {
-            console.warn("Autoplay prevented by browser:", error);
-            // Réinitialiser l'état de lecture
-            setIsPlaying(false);
-            // Nous gardons le fade-in du volume pour qu'il soit prêt quand l'utilisateur
-            // décidera de lancer la lecture manuellement
-            startVolumeFade();
-          });
-      }
+      attemptAutoplay();
+      startVolumeFade(); // Démarrer le fade-in du volume de toute façon
     }
     
     return () => {
@@ -78,6 +76,7 @@ export default function MusicPlayer() {
     };
   }, [tracks]);
   
+  // Mise à jour du volume
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = isMuted ? 0 : volume;
@@ -87,14 +86,10 @@ export default function MusicPlayer() {
   // Effet pour démarrer la lecture après une interaction utilisateur
   useEffect(() => {
     const attemptPlayOnUserInteraction = () => {
-      if (audioRef.current && !isPlaying) {
-        audioRef.current.play()
-          .then(() => {
-            setIsPlaying(true);
-          })
-          .catch(error => {
-            console.warn("Playback failed:", error);
-          });
+      if (audioRef.current) {
+        audioRef.current.play().catch(error => {
+          console.warn("Playback failed after interaction:", error);
+        });
       }
     };
     
@@ -109,7 +104,7 @@ export default function MusicPlayer() {
         document.removeEventListener(event, attemptPlayOnUserInteraction);
       });
     };
-  }, [isPlaying]);
+  }, []);
   
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
@@ -123,21 +118,12 @@ export default function MusicPlayer() {
     setIsMuted(!isMuted);
   };
   
-  const togglePlayPause = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        audioRef.current.play()
-          .then(() => setIsPlaying(true))
-          .catch(error => console.warn("Play failed:", error));
-      }
-    }
-  };
-  
   const skipTrack = () => {
     setCurrentTrack((prev) => (prev + 1) % tracks.length);
+    // Forcer la lecture lors du changement de piste
+    if (audioRef.current) {
+      audioRef.current.play().catch(console.error);
+    }
   };
   
   const handleTrackEnd = () => {
@@ -147,25 +133,23 @@ export default function MusicPlayer() {
   if (tracks.length === 0) return null;
   
   return (
-    <div className="fixed bottom-8 left-8 z-50">
+    <div className="fixed bottom-6 right-6 z-50">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex items-center gap-4 bg-black/50 backdrop-blur-lg rounded-full px-4 py-2"
+        className="flex items-center gap-3 bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5"
       >
         <audio
           ref={audioRef}
           src={tracks[currentTrack]}
           autoPlay={true}
-          muted={false} // Initialement non muet pour permettre la lecture avec son
+          loop={false}
           onEnded={handleTrackEnd}
           onCanPlay={() => {
             // Essayer de démarrer la lecture dès que possible
-            if (audioRef.current && !isPlaying) {
-              audioRef.current.play()
-                .then(() => setIsPlaying(true))
-                .catch(err => console.warn("Autoplay prevented:", err));
+            if (audioRef.current) {
+              audioRef.current.play().catch(err => console.warn("Autoplay prevented:", err));
             }
           }}
         />
@@ -173,26 +157,13 @@ export default function MusicPlayer() {
         <Button
           variant="ghost"
           size="icon"
-          className="text-white hover:text-white/80"
-          onClick={togglePlayPause}
-        >
-          {isPlaying ? (
-            <Pause className="h-5 w-5" />
-          ) : (
-            <Play className="h-5 w-5" />
-          )}
-        </Button>
-        
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-white hover:text-white/80"
+          className="text-white hover:text-white/80 h-8 w-8"
           onClick={toggleMute}
         >
           {isMuted || volume === 0 ? (
-            <VolumeX className="h-5 w-5" />
+            <VolumeX className="h-4 w-4" />
           ) : (
-            <Volume2 className="h-5 w-5" />
+            <Volume2 className="h-4 w-4" />
           )}
         </Button>
         
@@ -203,16 +174,16 @@ export default function MusicPlayer() {
           step="0.01"
           value={volume}
           onChange={handleVolumeChange}
-          className="w-24 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+          className="w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
         />
         
         <Button
           variant="ghost"
           size="icon"
-          className="text-white hover:text-white/80"
+          className="text-white hover:text-white/80 h-8 w-8"
           onClick={skipTrack}
         >
-          <SkipForward className="h-5 w-5" />
+          <SkipForward className="h-4 w-4" />
         </Button>
       </motion.div>
     </div>
