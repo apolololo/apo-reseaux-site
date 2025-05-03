@@ -3,7 +3,7 @@ import Header from "@/components/Header";
 import SocialGrid from "@/components/SocialGrid";
 import CustomCursor from "@/components/CustomCursor";
 import DotTicTacToe from "../components/DotTicTacToe";
-import { motion } from "framer-motion";
+import MusicPlayer from "@/components/MusicPlayer";
 import { useEffect } from "react";
 
 export default function Home() {
@@ -30,6 +30,9 @@ export default function Home() {
       
       {/* Mini-jeu discret sur le côté */}
       <DotTicTacToe />
+      
+      {/* Lecteur de musique */}
+      <MusicPlayer />
     </div>
   );
 }
