@@ -5,7 +5,8 @@ import {
   SiX,
   SiInstagram, 
   SiKofi, 
-  SiKickstarter 
+  SiKickstarter,
+  SiGithub 
 } from "react-icons/si";
 import { motion } from "framer-motion";
 
@@ -55,6 +56,13 @@ const SocialGrid = () => {
       rgbColor: "228,64,95"
     },
     {
+      name: "GitHub",
+      url: "https://github.com/apolololo",
+      icon: SiGithub,
+      color: "#FFFFFF",
+      rgbColor: "255,255,255"
+    },
+    {
       name: "Kick",
       url: "https://kick.com/tryh-apo",
       icon: SiKickstarter,
@@ -65,7 +73,7 @@ const SocialGrid = () => {
 
   return (
     <div className="relative w-full max-w-xl mx-auto">
-      <div className="grid grid-cols-6 gap-6 md:gap-8 justify-center">
+      <div className="grid grid-cols-7 gap-6 md:gap-8 justify-center">
         {platforms.map((platform) => {
           const Icon = platform.icon;
           
