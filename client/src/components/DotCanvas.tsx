@@ -46,8 +46,8 @@ const DotCanvas = () => {
           const dy = e.clientY - particle.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
           
-          // Strong attraction force when pressed
-          const attractionForce = 0.15;
+          // Reduced attraction force for slower movement
+          const attractionForce = 0.08;
           particle.speedX += (dx / distance) * attractionForce;
           particle.speedY += (dy / distance) * attractionForce;
           
@@ -56,14 +56,14 @@ const DotCanvas = () => {
           particle.isTargeting = true;
         });
       } else {
-        // Repulsion when not pressed
+        // Gentler repulsion when not pressed
         particlesRef.current.forEach(particle => {
           const dx = e.clientX - particle.x;
           const dy = e.clientY - particle.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
           
           if (distance < 150) {
-            const repulsionForce = 0.5;
+            const repulsionForce = 0.2; // Reduced from 0.5
             particle.speedX -= (dx / distance) * repulsionForce;
             particle.speedY -= (dy / distance) * repulsionForce;
           }
@@ -94,11 +94,11 @@ const DotCanvas = () => {
         particle.homeX = Math.random() * canvas.width;
         particle.homeY = Math.random() * canvas.height;
         
-        // Add very slight velocity towards new home
+        // Very gentle return velocity
         const dx = particle.homeX - particle.x;
         const dy = particle.homeY - particle.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const speed = 0.02;
+        const speed = 0.01; // Reduced from 0.02
         
         particle.speedX = (dx / distance) * speed;
         particle.speedY = (dy / distance) * speed;
@@ -120,8 +120,8 @@ const DotCanvas = () => {
           y,
           baseSize,
           size: baseSize,
-          speedX: (Math.random() - 0.5) * 0.2,
-          speedY: (Math.random() - 0.5) * 0.2,
+          speedX: (Math.random() - 0.5) * 0.1, // Reduced from 0.2
+          speedY: (Math.random() - 0.5) * 0.1, // Reduced from 0.2
           opacity: Math.random() * 0.4 + 0.1,
           color: colors[Math.floor(Math.random() * colors.length)],
           homeX: x,
@@ -162,7 +162,7 @@ const DotCanvas = () => {
       
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      // Update and draw particles
+      // Update and draw particles with slower movement
       particlesRef.current.forEach(particle => {
         if (particle.isTargeting && particle.targetX !== undefined && particle.targetY !== undefined) {
           const dx = particle.targetX - particle.x;
@@ -171,38 +171,38 @@ const DotCanvas = () => {
           
           if (distance > 1) {
             const angle = Math.atan2(dy, dx);
-            const speed = isPressedRef.current ? 0.2 : 0.1;
+            const speed = isPressedRef.current ? 0.1 : 0.05; // Reduced from 0.2/0.1
             particle.speedX += Math.cos(angle) * speed;
             particle.speedY += Math.sin(angle) * speed;
           }
         } else {
-          // Move towards home position when not targeting
+          // Move towards home position very slowly
           const dx = particle.homeX - particle.x;
           const dy = particle.homeY - particle.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
           
           if (distance > 1) {
             const angle = Math.atan2(dy, dx);
-            const speed = 0.01;
+            const speed = 0.005; // Reduced from 0.01
             particle.speedX += Math.cos(angle) * speed;
             particle.speedY += Math.sin(angle) * speed;
           }
         }
         
-        // Update position
+        // Update position with slower movement
         particle.x += particle.speedX;
         particle.y += particle.speedY;
         
-        // Strong damping when targeting to keep particles clustered
+        // Stronger damping for slower deceleration
         if (particle.isTargeting) {
-          particle.speedX *= 0.9;
-          particle.speedY *= 0.9;
+          particle.speedX *= 0.95; // Increased from 0.9
+          particle.speedY *= 0.95; // Increased from 0.9
         } else {
-          particle.speedX *= 0.99;
-          particle.speedY *= 0.99;
+          particle.speedX *= 0.995; // Increased from 0.99
+          particle.speedY *= 0.995; // Increased from 0.99
         }
         
-        // Boundary check with wrapping
+        // Wrap around screen edges with buffer
         if (particle.x < -10) particle.x = canvas.width + 10;
         else if (particle.x > canvas.width + 10) particle.x = -10;
         
@@ -234,10 +234,10 @@ const DotCanvas = () => {
         ctx.fill();
       });
       
-      // Connect nearby particles
+      // Connect nearby particles with thinner, more subtle lines
       if (frameCountRef.current % 2 === 0) {
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.02)";
-        ctx.lineWidth = 0.3;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.015)"; // Reduced opacity from 0.02
+        ctx.lineWidth = 0.2; // Reduced from 0.3
         
         const gridSize = 150;
         const grid: { [key: string]: Particle[] } = {};
