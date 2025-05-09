@@ -46,8 +46,8 @@ const DotCanvas = () => {
           const dy = e.clientY - particle.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
           
-          // Reduced attraction force for slower movement
-          const attractionForce = 0.08;
+          // Extremely reduced attraction force
+          const attractionForce = 0.02;
           particle.speedX += (dx / distance) * attractionForce;
           particle.speedY += (dy / distance) * attractionForce;
           
@@ -56,14 +56,14 @@ const DotCanvas = () => {
           particle.isTargeting = true;
         });
       } else {
-        // Gentler repulsion when not pressed
+        // Very gentle repulsion when not pressed
         particlesRef.current.forEach(particle => {
           const dx = e.clientX - particle.x;
           const dy = e.clientY - particle.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
           
           if (distance < 150) {
-            const repulsionForce = 0.2; // Reduced from 0.5
+            const repulsionForce = 0.05;
             particle.speedX -= (dx / distance) * repulsionForce;
             particle.speedY -= (dy / distance) * repulsionForce;
           }
@@ -98,7 +98,7 @@ const DotCanvas = () => {
         const dx = particle.homeX - particle.x;
         const dy = particle.homeY - particle.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const speed = 0.01; // Reduced from 0.02
+        const speed = 0.002;
         
         particle.speedX = (dx / distance) * speed;
         particle.speedY = (dy / distance) * speed;
@@ -120,8 +120,8 @@ const DotCanvas = () => {
           y,
           baseSize,
           size: baseSize,
-          speedX: (Math.random() - 0.5) * 0.1, // Reduced from 0.2
-          speedY: (Math.random() - 0.5) * 0.1, // Reduced from 0.2
+          speedX: (Math.random() - 0.5) * 0.03,
+          speedY: (Math.random() - 0.5) * 0.03,
           opacity: Math.random() * 0.4 + 0.1,
           color: colors[Math.floor(Math.random() * colors.length)],
           homeX: x,
@@ -162,7 +162,7 @@ const DotCanvas = () => {
       
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      // Update and draw particles with slower movement
+      // Update and draw particles with much slower movement
       particlesRef.current.forEach(particle => {
         if (particle.isTargeting && particle.targetX !== undefined && particle.targetY !== undefined) {
           const dx = particle.targetX - particle.x;
@@ -171,7 +171,7 @@ const DotCanvas = () => {
           
           if (distance > 1) {
             const angle = Math.atan2(dy, dx);
-            const speed = isPressedRef.current ? 0.1 : 0.05; // Reduced from 0.2/0.1
+            const speed = isPressedRef.current ? 0.03 : 0.015;
             particle.speedX += Math.cos(angle) * speed;
             particle.speedY += Math.sin(angle) * speed;
           }
@@ -183,7 +183,7 @@ const DotCanvas = () => {
           
           if (distance > 1) {
             const angle = Math.atan2(dy, dx);
-            const speed = 0.005; // Reduced from 0.01
+            const speed = 0.001;
             particle.speedX += Math.cos(angle) * speed;
             particle.speedY += Math.sin(angle) * speed;
           }
@@ -195,11 +195,11 @@ const DotCanvas = () => {
         
         // Stronger damping for slower deceleration
         if (particle.isTargeting) {
-          particle.speedX *= 0.95; // Increased from 0.9
-          particle.speedY *= 0.95; // Increased from 0.9
+          particle.speedX *= 0.98;
+          particle.speedY *= 0.98;
         } else {
-          particle.speedX *= 0.995; // Increased from 0.99
-          particle.speedY *= 0.995; // Increased from 0.99
+          particle.speedX *= 0.995;
+          particle.speedY *= 0.995;
         }
         
         // Wrap around screen edges with buffer
@@ -236,8 +236,8 @@ const DotCanvas = () => {
       
       // Connect nearby particles with thinner, more subtle lines
       if (frameCountRef.current % 2 === 0) {
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.015)"; // Reduced opacity from 0.02
-        ctx.lineWidth = 0.2; // Reduced from 0.3
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.01)";
+        ctx.lineWidth = 0.1;
         
         const gridSize = 150;
         const grid: { [key: string]: Particle[] } = {};
