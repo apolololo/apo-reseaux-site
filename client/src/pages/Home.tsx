@@ -34,6 +34,10 @@ export default function Home() {
       <div className="relative z-10">
         <ProjectsSection />
       </div>
+
+      <div className="relative z-10">
+        <CreationsSection />
+      </div>
       
       <DotTicTacToe />
       <MusicPlayer />
