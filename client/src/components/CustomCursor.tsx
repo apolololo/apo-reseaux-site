@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMousePosition } from "@/lib/useMousePosition";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -7,43 +7,48 @@ interface CursorTrail {
   x: number;
   y: number;
   size: number;
+  delay: number;
+  color?: string;
+  rotation?: number;
 }
 
 const CustomCursor = () => {
   const { x, y, isActive } = useMousePosition();
-  const [isHovering, setIsHovering] = useState(false);
+  const [trails, setTrails] = useState<CursorTrail[]>([]);
+  const lastPositionRef = useRef({ x, y });
+  const velocityRef = useRef({ x: 0, y: 0 });
+  const trailIdRef = useRef(0);
+  const trailTimerRef = useRef<number | null>(null);
+  const [cursorVariant, setCursorVariant] = useState("default");
   const [isClicking, setIsClicking] = useState(false);
   const [interactionType, setInteractionType] = useState<string | null>(null);
-  const [trails, setTrails] = useState<CursorTrail[]>([]);
-  const trailIdRef = useRef(0);
-  const lastPositionRef = useRef({ x, y });
   
-  // Event listeners optimisés
-  const handleMouseOver = useCallback((e: MouseEvent) => {
-    const target = e.target as HTMLElement;
-    const interactive = target.closest('button, a, [role="button"], [data-platform]');
-    if (interactive) {
-      setIsHovering(true);
-      const platformType = interactive.getAttribute("data-platform");
+  // Effect for hover detection with data attributes for interaction types
+  useEffect(() => {
+    const handleMouseOver = (e: MouseEvent) => {
+      setCursorVariant("hover");
+      
+      // Get data attribute for interaction type
+      const target = e.target as HTMLElement;
+      const platformType = target.closest("[data-platform]")?.getAttribute("data-platform");
       if (platformType) {
         setInteractionType(platformType);
       }
-    }
-  }, []);
-  
-  const handleMouseOut = useCallback(() => {
-    setIsHovering(false);
-    setInteractionType(null);
-  }, []);
-  
-  const handleMouseDown = useCallback(() => setIsClicking(true), []);
-  const handleMouseUp = useCallback(() => setIsClicking(false), []);
-  
-  useEffect(() => {
-    document.addEventListener("mouseover", handleMouseOver, { passive: true });
-    document.addEventListener("mouseout", handleMouseOut, { passive: true });
-    document.addEventListener("mousedown", handleMouseDown, { passive: true });
-    document.addEventListener("mouseup", handleMouseUp, { passive: true });
+    };
+    
+    const handleMouseOut = () => {
+      setCursorVariant("default");
+      setInteractionType(null);
+    };
+    
+    const handleMouseDown = () => setIsClicking(true);
+    const handleMouseUp = () => setIsClicking(false);
+    
+    // Delegate event listeners
+    document.addEventListener("mouseover", handleMouseOver);
+    document.addEventListener("mouseout", handleMouseOut);
+    document.addEventListener("mousedown", handleMouseDown);
+    document.addEventListener("mouseup", handleMouseUp);
     
     return () => {
       document.removeEventListener("mouseover", handleMouseOver);
@@ -51,41 +56,127 @@ const CustomCursor = () => {
       document.removeEventListener("mousedown", handleMouseDown);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [handleMouseOver, handleMouseOut, handleMouseDown, handleMouseUp]);
+  }, []);
   
-  // Trails optimisés - seulement quand on bouge vite
+  // Simplified effect for cursor trail with improved performance
   useEffect(() => {
     if (!isActive) return;
     
     const dx = x - lastPositionRef.current.x;
     const dy = y - lastPositionRef.current.y;
+    
+    // Update velocity (pixels per frame)
+    velocityRef.current = { x: dx, y: dy };
+    
     const speed = Math.sqrt(dx * dx + dy * dy);
     
-    // Créer des trails seulement si on bouge assez vite et qu'on a moins de 8 trails
-    if (speed > 5 && trails.length < 8) {
-      const newTrail: CursorTrail = {
-        id: trailIdRef.current++,
-        x,
-        y,
-        size: isClicking ? 4 : 2
-      };
+    // Generate trails with more constraints for better performance
+    const createTrail = () => {
+      // Only create trails if moving fast enough and limit creation when FPS might be low
+      if (speed > 8 && trails.length < 15) {
+        // Simplified trail creation - even smaller and fewer
+        const baseSize = isClicking ? 3 : 1.5;
+        
+        // Simplified color - only white with basic interaction indication
+        let color = "rgba(255, 255, 255, 0.4)";  // Reduced opacity from 0.6 to 0.4
+        if (interactionType && isClicking) {
+          color = "rgba(255, 255, 255, 0.6)";    // Reduced opacity from 0.8 to 0.6
+        }
+        
+        // Reduced trail count
+        const trailCount = isClicking ? 2 : 1;
+        
+        for (let i = 0; i < trailCount; i++) {
+          if (i > 0 && Math.random() > 0.5) continue; // 50% chance to skip additional trails
+          
+          const newTrail: CursorTrail = { 
+            id: trailIdRef.current++, 
+            x, 
+            y, 
+            size: baseSize,
+            delay: 0, // No delay for better performance
+            color
+          };
+          
+          setTrails(prev => [...prev, newTrail]);
+          
+          // Shorter trail duration
+          setTimeout(() => {
+            setTrails(prev => prev.filter(trail => trail.id !== newTrail.id));
+          }, 400);
+        }
+        
+        // More aggressive trail limiting
+        if (trails.length > 10) {
+          setTrails(prev => prev.slice(prev.length - 10));
+        }
+      }
       
-      setTrails(prev => [...prev, newTrail]);
+      lastPositionRef.current = { x, y };
       
-      // Supprimer le trail après 300ms
-      setTimeout(() => {
-        setTrails(prev => prev.filter(trail => trail.id !== newTrail.id));
-      }, 300);
+      // Less frequent trail creation
+      const nextTrailDelay = 60; // Fixed delay for better performance
+      trailTimerRef.current = window.setTimeout(createTrail, nextTrailDelay);
+    };
+    
+    if (trailTimerRef.current) {
+      clearTimeout(trailTimerRef.current);
     }
+    createTrail();
     
-    lastPositionRef.current = { x, y };
-  }, [x, y, isActive, isClicking, trails.length]);
+    return () => {
+      if (trailTimerRef.current) {
+        clearTimeout(trailTimerRef.current);
+      }
+    };
+  }, [x, y, isActive, isClicking, interactionType, trails.length]);
   
-  // Couleurs selon le type d'interaction
-  const getInteractionColor = (intense = false) => {
-    if (!interactionType) return "rgba(255, 255, 255, 0.8)";
+  // Cursor variants with clicking state
+  const variants = {
+    default: {
+      width: 12,  // Reduced from 16
+      height: 12, // Reduced from 16
+      borderWidth: "1.5px", // Thinner border
+      backgroundColor: "rgba(255, 255, 255, 0)",
+      x: -6, // Adjusted for new size
+      y: -6, // Adjusted for new size
+      borderColor: "rgba(255, 255, 255, 0.7)"
+    },
+    hover: {
+      width: isClicking ? 22 : 28, // Reduced from 40 when not clicking
+      height: isClicking ? 22 : 28, // Reduced from 40 when not clicking
+      borderWidth: "2px",
+      backgroundColor: "rgba(255, 255, 255, 0.05)",
+      x: isClicking ? -11 : -14, // Adjusted for new size
+      y: isClicking ? -11 : -14, // Adjusted for new size
+      borderColor: interactionType ? getInteractionColor() : "rgba(255, 255, 255, 0.7)"
+    }
+  };
+  
+  const dotVariants = {
+    default: {
+      width: 4, // Reduced from 6
+      height: 4, // Reduced from 6
+      opacity: 0.9,
+      x: -2, // Adjusted for new size
+      y: -2, // Adjusted for new size
+      backgroundColor: "rgba(255, 255, 255, 0.9)"
+    },
+    hover: {
+      width: isClicking ? 10 : 6, // Reduced from 8 when not clicking
+      height: isClicking ? 10 : 6, // Reduced from 8 when not clicking
+      opacity: 1,
+      x: isClicking ? -5 : -3, // Adjusted for new size
+      y: isClicking ? -5 : -3, // Adjusted for new size
+      backgroundColor: interactionType ? getInteractionColor(true) : "rgba(255, 255, 255, 1)"
+    }
+  };
+  
+  // Get color based on interaction type
+  function getInteractionColor(intense = false): string {
+    if (!interactionType) return "rgba(255, 255, 255, 0.7)";
     
-    const opacity = intense ? 1 : 0.8;
+    const opacity = intense ? 1 : 0.7;
     switch(interactionType) {
       case "twitch": return `rgba(145, 70, 255, ${opacity})`;
       case "youtube": return `rgba(255, 0, 0, ${opacity})`;
@@ -96,28 +187,22 @@ const CustomCursor = () => {
       case "kick": return `rgba(83, 252, 24, ${opacity})`;
       default: return `rgba(255, 255, 255, ${opacity})`;
     }
-  };
+  }
   
   if (!isActive) return null;
   
   return (
     <>
-      {/* Curseur principal */}
+      {/* Main cursor outer ring */}
       <motion.div 
         className="fixed rounded-full border pointer-events-none z-[9999]"
         style={{ 
           left: x, 
           top: y,
-          borderColor: getInteractionColor(),
-          boxShadow: isClicking ? `0 0 15px ${getInteractionColor(true)}` : "none"
+          boxShadow: isClicking ? `0 0 10px ${getInteractionColor(true)}` : "none"
         }}
-        animate={{
-          width: isHovering ? (isClicking ? 24 : 32) : 16,
-          height: isHovering ? (isClicking ? 24 : 32) : 16,
-          x: isHovering ? (isClicking ? -12 : -16) : -8,
-          y: isHovering ? (isClicking ? -12 : -16) : -8,
-          borderWidth: isHovering ? "2px" : "1.5px"
-        }}
+        variants={variants}
+        animate={cursorVariant}
         transition={{ 
           type: "spring", 
           stiffness: 400, 
@@ -126,20 +211,15 @@ const CustomCursor = () => {
         }}
       />
       
-      {/* Point central */}
+      {/* Main cursor dot */}
       <motion.div 
         className="fixed rounded-full pointer-events-none z-[9999]"
         style={{ 
           left: x, 
-          top: y,
-          backgroundColor: getInteractionColor(true)
+          top: y
         }}
-        animate={{
-          width: isClicking ? 8 : (isHovering ? 6 : 4),
-          height: isClicking ? 8 : (isHovering ? 6 : 4),
-          x: isClicking ? -4 : (isHovering ? -3 : -2),
-          y: isClicking ? -4 : (isHovering ? -3 : -2)
-        }}
+        variants={dotVariants}
+        animate={cursorVariant}
         transition={{ 
           type: "spring", 
           stiffness: 500, 
@@ -148,7 +228,7 @@ const CustomCursor = () => {
         }}
       />
       
-      {/* Trails optimisés */}
+      {/* Simplified cursor trails */}
       <AnimatePresence>
         {trails.map((trail) => (
           <motion.div
@@ -161,11 +241,11 @@ const CustomCursor = () => {
               height: trail.size,
               x: -trail.size / 2,
               y: -trail.size / 2,
-              backgroundColor: getInteractionColor()
+              backgroundColor: trail.color || "rgba(255, 255, 255, 0.4)"
             }}
-            initial={{ opacity: 0.6, scale: 1 }}
-            animate={{ opacity: 0.3, scale: 0.5 }}
-            exit={{ opacity: 0, scale: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.4 }}  // Reduced from 0.6 to match reduced opacity in trail creation
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           />
         ))}

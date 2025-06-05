@@ -23,17 +23,13 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased bg-background text-foreground overflow-hidden;
     font-family: 'Poppins', sans-serif;
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     -webkit-touch-callout: none;
-    /* Optimisations de performance */
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    will-change: auto;
   }
 
   :root {
@@ -124,13 +120,10 @@
   
   .glassmorphism {
     background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.3);
-    /* Optimisation GPU */
-    transform: translateZ(0);
-    will-change: transform;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.36);
   }
 
   .hover\:scale-130:hover {
@@ -140,14 +133,9 @@
 
 @layer components {
   .platform-card {
-    @apply bg-card bg-opacity-80 rounded-xl p-5 flex flex-col items-center justify-center gap-3 
-    transition-all duration-200 border border-transparent hover:border-accent hover:shadow-lg
+    @apply bg-card bg-opacity-80 backdrop-blur-md rounded-xl p-5 flex flex-col items-center justify-center gap-3 
+    transition-all duration-300 border border-transparent hover:border-accent hover:shadow-lg
     hover:shadow-accent/10 hover:-translate-y-1;
-    /* Optimisation : backdrop-blur réduit */
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
-    transform: translateZ(0);
-    will-change: transform;
   }
   
   .platform-icon {

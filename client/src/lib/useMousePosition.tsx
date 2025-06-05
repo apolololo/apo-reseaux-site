@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 
 export const useMousePosition = () => {
   const [position, setPosition] = useState<{ x: number, y: number }>({ 
@@ -6,31 +6,19 @@ export const useMousePosition = () => {
     y: 0 
   });
   const [isActive, setIsActive] = useState(false);
-  const rafRef = useRef<number>();
-  
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    // Throttle avec requestAnimationFrame pour de meilleures performances
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-    }
-    
-    rafRef.current = requestAnimationFrame(() => {
-      setPosition({ x: e.clientX, y: e.clientY });
-      if (!isActive) setIsActive(true);
-    });
-  }, [isActive]);
   
   useEffect(() => {
-    // Event listener optimisé avec passive
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    const handleMouseMove = (e: MouseEvent) => {
+      setPosition({ x: e.clientX, y: e.clientY });
+      if (!isActive) setIsActive(true);
+    };
+    
+    window.addEventListener("mousemove", handleMouseMove);
     
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-      }
     };
-  }, [handleMouseMove]);
+  }, [isActive]);
   
   return { ...position, isActive };
 };

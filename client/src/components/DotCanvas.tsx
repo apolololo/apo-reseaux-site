@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface Particle {
   x: number;
@@ -21,209 +21,288 @@ const DotCanvas = () => {
   const particlesRef = useRef<Particle[]>([]);
   const mousePositionRef = useRef({ x: 0, y: 0 });
   const isPressedRef = useRef(false);
-  const animationIdRef = useRef<number>();
-  const lastTimeRef = useRef<number>(0);
+  const frameCountRef = useRef(0);
+  const lastFrameTimeRef = useRef(0);
   
-  // Optimisation intelligente : plus de particules mais gestion optimisée
-  const getParticleCount = useCallback(() => {
-    const area = window.innerWidth * window.innerHeight;
-    return Math.min(Math.max(Math.floor(area / 20000), 50), 120); // Plus de particules pour la beauté
-  }, []);
-  
-  const initializeParticles = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const count = getParticleCount();
-    particlesRef.current = [];
-    const colors = ["#ffffff", "#dddddd", "#f0f0f0"];
-    
-    for (let i = 0; i < count; i++) {
-      const x = Math.random() * canvas.width;
-      const y = Math.random() * canvas.height;
-      const baseSize = Math.random() * 1.5 + 0.5;
-      
-      particlesRef.current.push({
-        x,
-        y,
-        baseSize,
-        size: baseSize,
-        speedX: (Math.random() - 0.5) * 0.5,
-        speedY: (Math.random() - 0.5) * 0.5,
-        opacity: Math.random() * 0.6 + 0.2,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        homeX: x,
-        homeY: y,
-        isTargeting: false
-      });
-    }
-  }, [getParticleCount]);
-  
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    mousePositionRef.current = { x: e.clientX, y: e.clientY };
-    
-    // Interaction avec les particules seulement si on clique
-    if (isPressedRef.current) {
-      particlesRef.current.forEach(particle => {
-        const dx = e.clientX - particle.x;
-        const dy = e.clientY - particle.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < 200) {
-          const attractionForce = 0.05;
-          particle.speedX += (dx / distance) * attractionForce;
-          particle.speedY += (dy / distance) * attractionForce;
-          particle.targetX = e.clientX;
-          particle.targetY = e.clientY;
-          particle.isTargeting = true;
-        }
-      });
-    }
-  }, []);
-  
-  const handleMouseDown = useCallback(() => {
-    isPressedRef.current = true;
-  }, []);
-  
-  const handleMouseUp = useCallback(() => {
-    isPressedRef.current = false;
-    
-    // Retour à la position d'origine
-    particlesRef.current.forEach(particle => {
-      particle.isTargeting = false;
-      particle.targetX = undefined;
-      particle.targetY = undefined;
-    });
-  }, []);
-  
-  const animate = useCallback((currentTime: number) => {
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
-    // Optimisation : 45 FPS au lieu de 60, mais plus fluide que 30
-    if (currentTime - lastTimeRef.current < 22) {
-      animationIdRef.current = requestAnimationFrame(animate);
-      return;
-    }
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initializeParticles();
+    };
     
-    lastTimeRef.current = currentTime;
-    
-    // Effacer le canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Dessiner les particules avec plus de beauté
-    particlesRef.current.forEach(particle => {
-      // Mouvement vers la cible ou retour à la maison
-      if (particle.isTargeting && particle.targetX !== undefined && particle.targetY !== undefined) {
-        const dx = particle.targetX - particle.x;
-        const dy = particle.targetY - particle.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance > 1) {
-          const angle = Math.atan2(dy, dx);
-          const speed = 0.05;
-          particle.speedX += Math.cos(angle) * speed;
-          particle.speedY += Math.sin(angle) * speed;
-        }
+    const handleMouseMove = (e: MouseEvent) => {
+      mousePositionRef.current = { x: e.clientX, y: e.clientY };
+      
+      if (isPressedRef.current) {
+        particlesRef.current.forEach(particle => {
+          const dx = e.clientX - particle.x;
+          const dy = e.clientY - particle.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          // Extremely reduced attraction force
+          const attractionForce = 0.02;
+          particle.speedX += (dx / distance) * attractionForce;
+          particle.speedY += (dy / distance) * attractionForce;
+          
+          particle.targetX = e.clientX;
+          particle.targetY = e.clientY;
+          particle.isTargeting = true;
+        });
       } else {
-        // Retour lent vers la position d'origine
+        // Very gentle repulsion when not pressed
+        particlesRef.current.forEach(particle => {
+          const dx = e.clientX - particle.x;
+          const dy = e.clientY - particle.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < 150) {
+            const repulsionForce = 0.05;
+            particle.speedX -= (dx / distance) * repulsionForce;
+            particle.speedY -= (dy / distance) * repulsionForce;
+          }
+        });
+      }
+    };
+    
+    const handleMouseDown = (e: MouseEvent) => {
+      isPressedRef.current = true;
+      
+      particlesRef.current.forEach(particle => {
+        particle.targetX = e.clientX;
+        particle.targetY = e.clientY;
+        particle.isTargeting = true;
+      });
+    };
+    
+    const handleMouseUp = () => {
+      isPressedRef.current = false;
+      
+      particlesRef.current.forEach(particle => {
+        particle.isTargeting = false;
+        particle.targetX = undefined;
+        particle.targetY = undefined;
+        particle.size = particle.baseSize;
+        
+        // Set new random home position
+        particle.homeX = Math.random() * canvas.width;
+        particle.homeY = Math.random() * canvas.height;
+        
+        // Very gentle return velocity
         const dx = particle.homeX - particle.x;
         const dy = particle.homeY - particle.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
+        const speed = 0.002;
         
-        if (distance > 1) {
-          const angle = Math.atan2(dy, dx);
-          const speed = 0.01;
-          particle.speedX += Math.cos(angle) * speed;
-          particle.speedY += Math.sin(angle) * speed;
+        particle.speedX = (dx / distance) * speed;
+        particle.speedY = (dy / distance) * speed;
+      });
+    };
+    
+    const initializeParticles = () => {
+      particlesRef.current = [];
+      const particleCount = Math.min(Math.max(Math.floor((canvas.width * canvas.height) / 25000), 40), 80);
+      const colors = ["#ffffff", "#dddddd"];
+      
+      for (let i = 0; i < particleCount; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        const baseSize = Math.random() * 1.5 + 0.5;
+        
+        particlesRef.current.push({
+          x,
+          y,
+          baseSize,
+          size: baseSize,
+          speedX: (Math.random() - 0.5) * 0.03,
+          speedY: (Math.random() - 0.5) * 0.03,
+          opacity: Math.random() * 0.4 + 0.1,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          homeX: x,
+          homeY: y
+        });
+      }
+    };
+    
+    window.addEventListener("resize", resizeCanvas);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mousedown", handleMouseDown);
+    window.addEventListener("mouseup", handleMouseUp);
+    
+    resizeCanvas();
+    initializeParticles();
+    
+    let animationId: number;
+    const maxFps = 60;
+    const frameInterval = 1000 / maxFps;
+    
+    const animate = (timestamp: number) => {
+      if (!lastFrameTimeRef.current) {
+        lastFrameTimeRef.current = timestamp;
+      }
+      
+      const deltaTime = timestamp - lastFrameTimeRef.current;
+      
+      if (deltaTime < frameInterval) {
+        animationId = requestAnimationFrame(animate);
+        return;
+      }
+      
+      frameCountRef.current++;
+      if (timestamp - lastFrameTimeRef.current >= 1000) {
+        frameCountRef.current = 0;
+        lastFrameTimeRef.current = timestamp;
+      }
+      
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Update and draw particles with much slower movement
+      particlesRef.current.forEach(particle => {
+        if (particle.isTargeting && particle.targetX !== undefined && particle.targetY !== undefined) {
+          const dx = particle.targetX - particle.x;
+          const dy = particle.targetY - particle.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance > 1) {
+            const angle = Math.atan2(dy, dx);
+            const speed = isPressedRef.current ? 0.03 : 0.015;
+            particle.speedX += Math.cos(angle) * speed;
+            particle.speedY += Math.sin(angle) * speed;
+          }
+        } else {
+          // Move towards home position very slowly
+          const dx = particle.homeX - particle.x;
+          const dy = particle.homeY - particle.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance > 1) {
+            const angle = Math.atan2(dy, dx);
+            const speed = 0.001;
+            particle.speedX += Math.cos(angle) * speed;
+            particle.speedY += Math.sin(angle) * speed;
+          }
+        }
+        
+        // Update position with slower movement
+        particle.x += particle.speedX;
+        particle.y += particle.speedY;
+        
+        // Stronger damping for slower deceleration
+        if (particle.isTargeting) {
+          particle.speedX *= 0.98;
+          particle.speedY *= 0.98;
+        } else {
+          particle.speedX *= 0.995;
+          particle.speedY *= 0.995;
+        }
+        
+        // Wrap around screen edges with buffer
+        if (particle.x < -10) particle.x = canvas.width + 10;
+        else if (particle.x > canvas.width + 10) particle.x = -10;
+        
+        if (particle.y < -10) particle.y = canvas.height + 10;
+        else if (particle.y > canvas.height + 10) particle.y = -10;
+        
+        // Draw particle
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        
+        if (particle.size > 1.5) {
+          const gradient = ctx.createRadialGradient(
+            particle.x, particle.y, 0,
+            particle.x, particle.y, particle.size * 3
+          );
+          gradient.addColorStop(0, particle.color.replace("1)", `${particle.opacity})`));
+          gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          
+          ctx.fillStyle = gradient;
+          ctx.fillRect(
+            particle.x - particle.size * 3,
+            particle.y - particle.size * 3,
+            particle.size * 6,
+            particle.size * 6
+          );
+        }
+        
+        ctx.fillStyle = particle.color.replace("1)", `${particle.opacity})`);
+        ctx.fill();
+      });
+      
+      // Connect nearby particles with thinner, more subtle lines
+      if (frameCountRef.current % 2 === 0) {
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.01)";
+        ctx.lineWidth = 0.1;
+        
+        const gridSize = 150;
+        const grid: { [key: string]: Particle[] } = {};
+        
+        particlesRef.current.forEach(p => {
+          const cellX = Math.floor(p.x / gridSize);
+          const cellY = Math.floor(p.y / gridSize);
+          const cellKey = `${cellX},${cellY}`;
+          
+          if (!grid[cellKey]) {
+            grid[cellKey] = [];
+          }
+          
+          grid[cellKey].push(p);
+        });
+        
+        for (const cellKey in grid) {
+          const [cellX, cellY] = cellKey.split(',').map(Number);
+          
+          const neighbors = [
+            [cellX, cellY],
+            [cellX + 1, cellY],
+            [cellX, cellY + 1]
+          ];
+          
+          for (const [nx, ny] of neighbors) {
+            const neighborKey = `${nx},${ny}`;
+            const neighborCell = grid[neighborKey];
+            
+            if (!neighborCell) continue;
+            
+            for (const p1 of grid[cellKey]) {
+              for (let i = 0; i < neighborCell.length; i += 3) {
+                const p2 = neighborCell[i];
+                if (p1 === p2) continue;
+                
+                const dx = p1.x - p2.x;
+                const dy = p1.y - p2.y;
+                const distSquared = dx * dx + dy * dy;
+                
+                if (distSquared < 8100) {
+                  ctx.beginPath();
+                  ctx.moveTo(p1.x, p1.y);
+                  ctx.lineTo(p2.x, p2.y);
+                  ctx.stroke();
+                }
+              }
+            }
+          }
         }
       }
       
-      // Mise à jour de position
-      particle.x += particle.speedX;
-      particle.y += particle.speedY;
-      
-      // Damping
-      particle.speedX *= 0.99;
-      particle.speedY *= 0.99;
-      
-      // Rebond sur les bords
-      if (particle.x <= 0 || particle.x >= canvas.width) {
-        particle.speedX *= -0.8;
-        particle.x = Math.max(0, Math.min(canvas.width, particle.x));
-      }
-      if (particle.y <= 0 || particle.y >= canvas.height) {
-        particle.speedY *= -0.8;
-        particle.y = Math.max(0, Math.min(canvas.height, particle.y));
-      }
-      
-      // Dessiner la particule avec un petit glow
-      ctx.globalAlpha = particle.opacity;
-      
-      // Petit glow pour les particules plus grandes
-      if (particle.size > 1) {
-        const gradient = ctx.createRadialGradient(
-          particle.x, particle.y, 0,
-          particle.x, particle.y, particle.size * 2
-        );
-        gradient.addColorStop(0, particle.color);
-        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-        
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size * 2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      
-      // Particule principale
-      ctx.fillStyle = particle.color;
-      ctx.beginPath();
-      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-      ctx.fill();
-    });
+      animationId = requestAnimationFrame(animate);
+    };
     
-    ctx.globalAlpha = 1;
-    animationIdRef.current = requestAnimationFrame(animate);
-  }, []);
-  
-  const handleResize = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    initializeParticles();
-  }, [initializeParticles]);
-  
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    // Configuration initiale
-    handleResize();
-    
-    // Démarrer l'animation
-    animationIdRef.current = requestAnimationFrame(animate);
-    
-    // Event listeners
-    window.addEventListener("resize", handleResize, { passive: true });
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    window.addEventListener("mousedown", handleMouseDown, { passive: true });
-    window.addEventListener("mouseup", handleMouseUp, { passive: true });
+    animationId = requestAnimationFrame(animate);
     
     return () => {
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("resize", resizeCanvas);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mouseup", handleMouseUp);
-      if (animationIdRef.current) {
-        cancelAnimationFrame(animationIdRef.current);
-      }
+      cancelAnimationFrame(animationId);
     };
-  }, [animate, handleResize, handleMouseMove, handleMouseDown, handleMouseUp]);
+  }, []);
   
   return (
     <canvas 
