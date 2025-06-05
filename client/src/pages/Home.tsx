@@ -5,7 +5,10 @@ import CustomCursor from "@/components/CustomCursor";
 import DotTicTacToe from "../components/DotTicTacToe";
 import MusicPlayer from "@/components/MusicPlayer";
 import ProjectsSection from "@/components/ProjectsSection";
+import CreationsSection from "@/components/CreationsSection";
+import DiscordWidget from "@/components/DiscordWidget";
 import { useEffect } from "react";
+import { motion } from "framer-motion";
 
 export default function Home() {
   useEffect(() => {
@@ -34,6 +37,7 @@ export default function Home() {
       
       <DotTicTacToe />
       <MusicPlayer />
+      <DiscordWidget />
     </div>
   );
 }
