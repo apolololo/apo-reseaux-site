@@ -18,28 +18,28 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="relative w-full overflow-y-auto">
+    <div className="relative w-full">
       {/* Fond avec les étoiles */}
       <div className="fixed inset-0 -z-10">
         <DotCanvas />
       </div>
-      
+
       {/* Contenu principal */}
       <div className="relative">
         <CustomCursor />
         
         {/* Section principale avec les liens */}
-        <section className="min-h-screen flex flex-col items-center justify-center px-4">
+        <div className="min-h-screen flex flex-col items-center justify-center px-4">
           <Header />
           <div className="mt-8">
             <SocialGrid />
           </div>
-        </section>
+        </div>
         
         {/* Section des créations */}
-        <section className="relative">
+        <div className="relative bg-transparent">
           <CreationsSection />
-        </section>
+        </div>
       </div>
       
       {/* Mini-jeu discret sur le côté */}
