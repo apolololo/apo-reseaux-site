@@ -18,21 +18,26 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="relative w-full overflow-x-hidden">
-      <CustomCursor />
+    <>
+      {/* Fond avec les étoiles */}
       <DotCanvas />
       
-      {/* Section principale avec les liens */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4">
-        <Header />
-        <div className="mt-8">
-          <SocialGrid />
-        </div>
-      </div>
-      
-      {/* Section des créations */}
-      <div className="relative z-10">
-        <CreationsSection />
+      {/* Contenu principal */}
+      <div className="relative">
+        <CustomCursor />
+        
+        {/* Section principale avec les liens */}
+        <section className="min-h-screen flex flex-col items-center justify-center px-4">
+          <Header />
+          <div className="mt-8">
+            <SocialGrid />
+          </div>
+        </section>
+        
+        {/* Section des créations */}
+        <section className="relative">
+          <CreationsSection />
+        </section>
       </div>
       
       {/* Mini-jeu discret sur le côté */}
@@ -40,6 +45,6 @@ export default function Home() {
       
       {/* Lecteur de musique */}
       <MusicPlayer />
-    </div>
+    </>
   );
 }

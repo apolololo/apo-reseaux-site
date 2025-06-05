@@ -3,12 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 
 const CreationsSection = () => {
   return (
-    <div className="w-full py-32">
+    <div className="w-full min-h-screen py-32 flex items-center">
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="max-w-4xl mx-auto px-4"
+        className="max-w-4xl mx-auto px-4 w-full"
       >
         <h2 className="text-4xl font-bold text-white text-center mb-12 tracking-wider">
           Mes Créations
