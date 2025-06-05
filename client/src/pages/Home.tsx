@@ -4,10 +4,10 @@ import SocialGrid from "@/components/SocialGrid";
 import CustomCursor from "@/components/CustomCursor";
 import DotTicTacToe from "../components/DotTicTacToe";
 import MusicPlayer from "@/components/MusicPlayer";
+import ProjectsSection from "@/components/ProjectsSection";
 import { useEffect } from "react";
 
 export default function Home() {
-  // Désactiver la sélection de texte pour une meilleure expérience interactive
   useEffect(() => {
     document.body.style.userSelect = 'none';
     
@@ -17,7 +17,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden">
+    <div className="relative w-full overflow-x-hidden">
       <CustomCursor />
       <DotCanvas />
       
@@ -28,10 +28,11 @@ export default function Home() {
         </div>
       </div>
       
-      {/* Mini-jeu discret sur le côté */}
-      <DotTicTacToe />
+      <div className="relative z-10">
+        <ProjectsSection />
+      </div>
       
-      {/* Lecteur de musique */}
+      <DotTicTacToe />
       <MusicPlayer />
     </div>
   );
