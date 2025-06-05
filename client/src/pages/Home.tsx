@@ -18,9 +18,11 @@ export default function Home() {
   }, []);
 
   return (
-    <>
+    <div className="relative w-full overflow-y-auto">
       {/* Fond avec les étoiles */}
-      <DotCanvas />
+      <div className="fixed inset-0 -z-10">
+        <DotCanvas />
+      </div>
       
       {/* Contenu principal */}
       <div className="relative">
@@ -45,6 +47,6 @@ export default function Home() {
       
       {/* Lecteur de musique */}
       <MusicPlayer />
-    </>
+    </div>
   );
 }

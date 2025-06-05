@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 
 const CreationsSection = () => {
   return (
-    <div className="w-full min-h-screen py-32 flex items-center">
+    <div className="w-full min-h-screen py-32 flex items-center bg-transparent">
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
@@ -17,6 +17,7 @@ const CreationsSection = () => {
         <motion.div
           whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.2 }}
+          className="mb-32"
         >
           <Card className="bg-black/40 backdrop-blur-sm border-white/10 hover:border-white/20 transition-colors duration-300">
             <CardHeader>
