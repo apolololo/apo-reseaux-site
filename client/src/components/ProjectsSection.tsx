@@ -21,9 +21,10 @@ const ProjectsSection = () => {
         
         <div className="flex flex-col items-center gap-12">
           <ProjectCard
-            title="Testeur de Manette"
+            title="Controller Check"
             description="Une application web permettant de tester la sensibilité des joysticks et les boutons de votre manette de jeu."
             videoSrc="/video-manette.mp4"
+            projectUrl="https://controllercheck.netlify.app"
           />
         </div>
       </div>
