@@ -18,10 +18,11 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden">
+    <div className="relative w-full overflow-x-hidden">
       <CustomCursor />
       <DotCanvas />
       
+      {/* Section principale avec les liens */}
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4">
         <Header />
         <div className="mt-8">
@@ -30,7 +31,9 @@ export default function Home() {
       </div>
       
       {/* Section des créations */}
-      <CreationsSection />
+      <div className="relative z-10">
+        <CreationsSection />
+      </div>
       
       {/* Mini-jeu discret sur le côté */}
       <DotTicTacToe />
