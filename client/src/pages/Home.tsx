@@ -4,6 +4,7 @@ import SocialGrid from "@/components/SocialGrid";
 import CustomCursor from "@/components/CustomCursor";
 import DotTicTacToe from "../components/DotTicTacToe";
 import MusicPlayer from "@/components/MusicPlayer";
+import CreationsSection from "@/components/CreationsSection";
 import { useEffect } from "react";
 
 export default function Home() {
@@ -27,6 +28,9 @@ export default function Home() {
           <SocialGrid />
         </div>
       </div>
+      
+      {/* Section des créations */}
+      <CreationsSection />
       
       {/* Mini-jeu discret sur le côté */}
       <DotTicTacToe />
