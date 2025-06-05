@@ -13,8 +13,7 @@
 .no-custom-cursor,
 .no-custom-cursor *,
 .no-custom-cursor button,
-.no-custom-cursor canvas,
-.no-custom-cursor video {
+.no-custom-cursor canvas {
   cursor: pointer !important;
 }
 
@@ -24,25 +23,13 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased bg-background text-foreground overflow-hidden;
     font-family: 'Poppins', sans-serif;
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     -webkit-touch-callout: none;
-  }
-
-  ::-webkit-scrollbar {
-    width: 10px;
-  }
-
-  ::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
   }
 
   :root {
