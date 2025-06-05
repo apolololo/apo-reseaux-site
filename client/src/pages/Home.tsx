@@ -2,7 +2,6 @@ import DotCanvas from "@/components/DotCanvas";
 import Header from "@/components/Header";
 import SocialGrid from "@/components/SocialGrid";
 import CustomCursor from "@/components/CustomCursor";
-import DotTicTacToe from "../components/DotTicTacToe";
 import MusicPlayer from "@/components/MusicPlayer";
 import CreationsSection from "@/components/CreationsSection";
 import { useEffect } from "react";
@@ -41,9 +40,6 @@ export default function Home() {
           <CreationsSection />
         </div>
       </div>
-      
-      {/* Mini-jeu discret sur le côté */}
-      <DotTicTacToe />
       
       {/* Lecteur de musique */}
       <MusicPlayer />

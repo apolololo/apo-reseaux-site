@@ -16,11 +16,11 @@ const CreationsSection = () => {
         </h2>
         
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
           viewport={{ once: true }}
-          whileHover={{ scale: 1.02 }}
+          whileHover={{ scale: 1.01 }}
           className="mb-32"
         >
           <Card className="bg-black/60 backdrop-blur-md border-white/20 hover:border-white/40 transition-all duration-300 shadow-2xl hover:shadow-white/10">
@@ -35,7 +35,10 @@ const CreationsSection = () => {
                 <video
                   className="w-full h-full object-cover"
                   src="/video-manette.mp4"
-                  controls
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
                   poster="/video-manette-poster.jpg"
                 />
               </div>

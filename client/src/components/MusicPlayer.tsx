@@ -37,20 +37,29 @@ export default function MusicPlayer() {
       .catch(error => console.error('Error fetching music files:', error));
   }, []);
 
-  // Smooth volume fade-in effect
+  // Smooth volume fade-in effect (optimisé avec requestAnimationFrame)
   useEffect(() => {
     const startVolumeFade = () => {
       let currentVolume = 0;
-      clearInterval(fadeIntervalRef.current);
+      const targetVolume = 0.5;
+      const fadeStep = 0.005; // Plus petit pas pour plus de fluidité
+      
+      if (fadeIntervalRef.current) {
+        cancelAnimationFrame(fadeIntervalRef.current);
+      }
 
-      fadeIntervalRef.current = window.setInterval(() => {
-        currentVolume += 0.01;
-        if (currentVolume >= 0.5) {
-          currentVolume = 0.5;
-          clearInterval(fadeIntervalRef.current);
+      const fadeFrame = () => {
+        currentVolume += fadeStep;
+        if (currentVolume >= targetVolume) {
+          currentVolume = targetVolume;
+          setVolume(currentVolume);
+          return;
         }
         setVolume(currentVolume);
-      }, 50); // Update every 50ms for smooth transition
+        fadeIntervalRef.current = requestAnimationFrame(fadeFrame);
+      };
+      
+      fadeIntervalRef.current = requestAnimationFrame(fadeFrame);
     };
 
     if (tracks.length > 0 && audioRef.current) {
@@ -66,7 +75,9 @@ export default function MusicPlayer() {
     }
 
     return () => {
-      clearInterval(fadeIntervalRef.current);
+      if (fadeIntervalRef.current) {
+        cancelAnimationFrame(fadeIntervalRef.current);
+      }
     };
   }, [tracks]);
 
@@ -77,32 +88,36 @@ export default function MusicPlayer() {
     }
   }, [volume, isMuted]);
 
-  // Effet pour s'assurer que la musique continue de jouer
+  // Effet pour s'assurer que la musique continue de jouer (optimisé)
   useEffect(() => {
     if (isPlaying && audioRef.current) {
-      // S'assurer que la musique ne peut pas être mise en pause
+      const audio = audioRef.current;
+      
       const ensurePlaying = () => {
-        if (audioRef.current && audioRef.current.paused) {
-          audioRef.current.play().catch(console.error);
+        if (audio.paused && !audio.ended) {
+          audio.play().catch(console.error);
         }
       };
 
-      // Vérifier périodiquement que la musique joue toujours
-      const checkInterval = setInterval(ensurePlaying, 1000);
-      // Ajouter un écouteur pour redémarrer la lecture si elle est mise en pause
-      audioRef.current.addEventListener('pause', () => {
-        if (!audioRef.current?.ended) {
-          audioRef.current?.play().catch(console.error);
+      // Vérifier moins fréquemment pour économiser les ressources
+      const checkInterval = setInterval(ensurePlaying, 5000);
+      
+      const handlePause = () => {
+        if (!audio.ended) {
+          audio.play().catch(console.error);
         }
-      });
+      };
+      
+      audio.addEventListener('pause', handlePause, { passive: true });
 
       return () => {
         clearInterval(checkInterval);
+        audio.removeEventListener('pause', handlePause);
       };
     }
   }, [isPlaying]);
 
-  // Handle mouse enter/leave for the player
+  // Handle mouse enter/leave for the player (optimisé)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (playerRef.current && !playerRef.current.contains(event.target as Node)) {
@@ -110,7 +125,7 @@ export default function MusicPlayer() {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside, { passive: true });
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
