@@ -26,11 +26,6 @@ const FloatingBubble = ({ title, description, videoSrc }: FloatingBubbleProps) =
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        whileHover={{
-          scale: 1.02,
-          boxShadow: "0 0 30px rgba(255, 255, 255, 0.2)",
-          borderColor: "rgba(255, 255, 255, 0.3)",
-        }}
       >
         {/* Effet de brillance sur les bords */}
         <div className="absolute inset-0 rounded-3xl opacity-0 hover:opacity-100 transition-opacity duration-500">
